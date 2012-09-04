@@ -575,6 +575,10 @@ static inline void prepare_page_table(struct meminfo *mi)
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
+#if (defined(CONFIG_ARCH_PECOS) || defined(CONFIG_ARCH_NEVIS) || defined(CONFIG_ARCH_PECOS_256M))
+	for (addr = 0; addr <= (unsigned long) (PAGE_OFFSET+TEXT_OFFSET-PGDIR_SIZE); addr += PGDIR_SIZE)
+		pmd_clear(pmd_off_k(addr));
+#else
 	for (addr = 0; addr < MODULE_START; addr += PGDIR_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -584,7 +588,7 @@ static inline void prepare_page_table(struct meminfo *mi)
 #endif
 	for ( ; addr < PAGE_OFFSET; addr += PGDIR_SIZE)
 		pmd_clear(pmd_off_k(addr));
-
+#endif
 	/*
 	 * Clear out all the kernel space mappings, except for the first
 	 * memory bank, up to the end of the vmalloc region.
@@ -620,6 +624,19 @@ void __init reserve_node_zero(pg_data_t *pgdat)
 	reserve_bootmem_node(pgdat, __pa(swapper_pg_dir),
 			     PTRS_PER_PGD * sizeof(pgd_t), BOOTMEM_DEFAULT);
 
+	/*
+	 * Reserve the Conexant Nevis specific areas
+	 * WARNING: Make sure the DECARM area is not exactly at the end of the RAM.
+	 * 	    It might not be reserved due to bootmem allocator?
+	 */
+	if (machine_is_nevis()) {
+		/* ARM9 Vector */
+		reserve_bootmem_node(pgdat, 0x10000, 0x10000,
+			BOOTMEM_DEFAULT);
+		/* Splash Image (2MB) */
+		reserve_bootmem_node(pgdat, 0x100000, 0x200000,
+			BOOTMEM_DEFAULT);
+	}
 	/*
 	 * Hmm... This should go elsewhere, but we really really need to
 	 * stop things allocating the low memory; ideally we need a better

@@ -19,7 +19,7 @@
  * Returns  : number of bytes NOT cleared
  */
 ENTRY(__clear_user)
-		stmfd	sp!, {r1, lr}
+		stmfd	sp!, {r1, r3, lr}
 		mov	r2, #0
 		cmp	r1, #4
 		blt	2f
@@ -32,6 +32,13 @@ USER(		strltbt	r2, [r0], #1)
 		rsb	ip, ip, #4
 		sub	r1, r1, ip		@  7  6  5  4  3  2  1
 1:		subs	r1, r1, #8		@ -1 -2 -3 -4 -5 -6 -7
+#ifndef CONFIG_OUTER_CACHE
+		tstpl	r0, #0x1f		@  see if we are at the beginning of a cache line
+USER(		ldreqt	r3, [r0])		@  force line allocate if we are
+		cmp	r1, #0		@  The flag set as a result of the SUSB instruction is
+						@  positive, Zero or Negative. comparing r1 with zero would
+						@  result in the same flags getting set again.
+#endif
 USER(		strplt	r2, [r0], #4)
 USER(		strplt	r2, [r0], #4)
 		bpl	1b
@@ -41,12 +48,13 @@ USER(		strplt	r2, [r0], #4)
 USER(		strnebt	r2, [r0], #1)
 USER(		strnebt	r2, [r0], #1)
 		tst	r1, #1			@ x1 x0 x1 x0 x1 x0 x1
+		it	ne
 USER(		strnebt	r2, [r0], #1)
 		mov	r0, #0
-		ldmfd	sp!, {r1, pc}
+		ldmfd	sp!, {r1, r3,  pc}
 
 		.section .fixup,"ax"
 		.align	0
-9001:		ldmfd	sp!, {r0, pc}
+9001:		ldmfd	sp!, {r0, r3, pc}
 		.previous
 

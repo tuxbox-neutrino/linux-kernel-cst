@@ -251,6 +251,7 @@ __create_page_tables:
 	add	r6, r4, r6, lsr #18
 1:	cmp	r0, r6
 	add	r3, r3, #1 << 20
+	it	ls
 	strls	r3, [r0], #4
 	bls	1b
 

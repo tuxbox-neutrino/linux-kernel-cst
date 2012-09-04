@@ -383,6 +383,10 @@ config MTD_ARM_INTEGRATOR
 	tristate "CFI Flash device mapped on ARM Integrator/P720T"
 	depends on ARM && MTD_CFI
 
+config MTD_NEVIS_FLASH
+	tristate "CFI Flash defice(s) mapped on Conexant CX2450x (Nevis)"
+	depends on ARM && MTD_CFI
+
 config MTD_CDB89712
 	tristate "Cirrus CDB89712 evaluation board mappings"
 	depends on MTD_CFI && ARCH_CDB89712

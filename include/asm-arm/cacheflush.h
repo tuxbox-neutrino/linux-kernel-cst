@@ -300,16 +300,6 @@ static inline void outer_flush_range(unsigned long start, unsigned long end)
 #endif
 
 /*
- * flush_cache_vmap() is used when creating mappings (eg, via vmap,
- * vmalloc, ioremap etc) in kernel space for pages.  Since the
- * direct-mappings of these pages may contain cached data, we need
- * to do a full cache flush to ensure that writebacks don't corrupt
- * data placed into these pages via the new mappings.
- */
-#define flush_cache_vmap(start, end)		flush_cache_all()
-#define flush_cache_vunmap(start, end)		flush_cache_all()
-
-/*
  * Copy user data from/to a page which is mapped into a different
  * processes address space.  Really, we want to allow our "user
  * space" model to handle this.
@@ -409,6 +399,20 @@ extern void flush_ptrace_access(struct vm_area_struct *vma, struct page *page,
 extern void flush_dcache_page(struct page *);
 
 extern void __flush_dcache_page(struct address_space *mapping, struct page *page);
+
+static inline void __flush_icache_all(void)
+{
+	asm(
+#ifndef CONFIG_ARM_ERRATA_411920
+	    "mcr	p15, 0, %0, c7, c5, 0	@ invalidate I-cache\n"
+#else
+	    "bl		v6_icache_inval_all\n"
+#endif
+	    "mcr	p15, 0, %0, c7, c5, 6	@ flush BTAC/BTB\n"
+	    :
+	    : "r" (0)
+	    : "r0", "r1", "lr", "cc");
+}
 
 #define ARCH_HAS_FLUSH_ANON_PAGE
 static inline void flush_anon_page(struct vm_area_struct *vma,
@@ -521,5 +525,30 @@ static inline void flush_ioremap_region(unsigned long phys, void __iomem *virt,
 	})
 
 #endif
+
+/*
+ * flush_cache_vmap() is used when creating mappings (eg, via vmap,
+ * vmalloc, ioremap etc) in kernel space for pages.  Since the
+ * direct-mappings of these pages may contain cached data, we need
+ * to do a full cache flush to ensure that writebacks don't corrupt
+ * data placed into these pages via the new mappings.
+ */
+static inline void flush_cache_vmap(unsigned long start, unsigned long end)
+{
+	if (!cache_is_vipt_nonaliasing())
+		flush_cache_all();
+	else
+		/*
+		 * set_pte_at() called from vmap_pte_range() does not
+		 * have a DSB after cleaning the cache line.
+		 */
+		dsb();
+}
+
+static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
+{
+	if (!cache_is_vipt_nonaliasing())
+		flush_cache_all();
+}
 
 #endif

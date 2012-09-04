@@ -76,8 +76,8 @@ tune-$(CONFIG_CPU_SA110)	:=-mtune=strongarm110
 tune-$(CONFIG_CPU_SA1100)	:=-mtune=strongarm1100
 tune-$(CONFIG_CPU_XSCALE)	:=$(call cc-option,-mtune=xscale,-mtune=strongarm110) -Wa,-mcpu=xscale
 tune-$(CONFIG_CPU_XSC3)		:=$(call cc-option,-mtune=xscale,-mtune=strongarm110) -Wa,-mcpu=xscale
-tune-$(CONFIG_CPU_V6)		:=$(call cc-option,-mtune=arm1136j-s,-mtune=strongarm)
-
+#tune-$(CONFIG_CPU_V6)		:=$(call cc-option,-mtune=arm1136j-s,-mtune=strongarm)
+tune-$(CONFIG_CPU_V6)		:=$(call cc-option,-mtune=arm1176jz-s,-mtune=strongarm)
 ifeq ($(CONFIG_AEABI),y)
 CFLAGS_ABI	:=-mabi=aapcs-linux -mno-thumb-interwork
 else
@@ -140,6 +140,13 @@ endif
  machine-$(CONFIG_ARCH_MX3)	   := mx3
  machine-$(CONFIG_ARCH_ORION5X)	   := orion5x
  machine-$(CONFIG_ARCH_MSM7X00A)   := msm
+ machine-$(CONFIG_ARCH_NEVIS)	   := nevis
+ textofs-$(CONFIG_ARCH_NEVIS)	   := $(CONFIG_CNXT_TEXT_OFFSET)
+
+
+ifeq ($(CONFIG_ARCH_NEVIS),y)
+KBUILD_CFLAGS	+= -DTEXT_OFFSET=$(CONFIG_CNXT_TEXT_OFFSET)
+endif
 
 ifeq ($(CONFIG_ARCH_EBSA110),y)
 # This is what happens if you forget the IOCS16 line.

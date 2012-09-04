@@ -36,6 +36,10 @@
 #include <linux/i2c-dev.h>
 #include <asm/uaccess.h>
 
+#ifndef I2C_DRIVERID_I2CDEV
+#define I2C_DRIVERID_I2CDEV	900
+#endif
+
 static struct i2c_driver i2cdev_driver;
 
 /*

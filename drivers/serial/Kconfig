@@ -1255,6 +1255,85 @@ config SERIAL_TXX9_STDSERIAL
 	bool "TX39XX/49XX SIO act as standard serial"
 	depends on !SERIAL_8250 && SERIAL_TXX9
 
+config SERIAL_CX2450X
+	bool "Conexant CX2450x SoC UART support"
+	depends on ARCH_NEVIS
+	select SERIAL_CORE
+	default y
+	help
+	  The Conexant CX2450x SoC has three 16550 style UARTs. Each of them 
+	  can be routed to various pins, but note that the pin routing must 
+	  be correctly setup by the Bootloader/BIOS. 
+	  
+	  This driver reads the pin config and enables all configured ports.
+	  
+	  If you enable the serial console support for this driver, the 
+	  lowest configured port is used as the system console
+
+choice
+	prompt "Default Baud Rate for CX2450x SoC UATR's"
+	depends on SERIAL_CX2450X
+	default SERIAL_CX2450X_BAUD_RATE_115200
+
+config SERIAL_CX2450X_BAUD_RATE_230400
+	bool "230400 Baud"
+
+config SERIAL_CX2450X_BAUD_RATE_115200
+	bool "115200 Baud"
+
+config SERIAL_CX2450X_BAUD_RATE_57600
+	bool "57600 Baud"
+
+config SERIAL_CX2450X_BAUD_RATE_38400
+	bool "38400 Baud"
+
+config SERIAL_CX2450X_BAUD_RATE_19200
+	bool "19200 Baud"
+
+config SERIAL_CX2450X_BAUD_RATE_9600
+	bool "9600 Baud"
+
+endchoice
+
+config CX2450X_BAUD_RATE
+	int
+	depends on SERIAL_CX2450X
+	default 115200 if (SERIAL_CX2450X_BAUD_RATE_115200)
+	default 57600 if (SERIAL_CX2450X_BAUD_RATE_57600)
+	default 38400 if (SERIAL_CX2450X_BAUD_RATE_38400)
+	default 19200 if (SERIAL_CX2450X_BAUD_RATE_19200)
+	default 9600 if (SERIAL_CX2450X_BAUD_RATE_9600)
+
+config SERIAL_CX2450X_UART1_ENABLE
+	bool "Enable UART-1"
+	depends on SERIAL_CX2450X=y
+
+config SERIAL_CX2450X_UART2_ENABLE
+	bool "Enable UART-2"
+	depends on SERIAL_CX2450X=y
+
+config SERIAL_CX2450X_UART3_ENABLE
+	bool "Enable UART-3"
+	depends on SERIAL_CX2450X=y
+	default y
+
+config SERIAL_CX2450X_CONSOLE
+	bool "Conexant CX2450x SoC UART console support"
+	depends on SERIAL_CX2450X=y
+	select SERIAL_CORE_CONSOLE
+	default y
+	help
+	  Provides support for serial console.
+	  The lowest configured port is used for the system console.
+
+config SERIAL_CX2450X_BOOTMSG
+	bool "Print early boot messages on Conexant CX2450x SoC UART's"
+	depends on SERIAL_CX2450X=y
+	default y
+	help
+	  Enable this option to see the the full boot message. If disabled
+	  you will see the bootmessage from late the UART-init stage.
+
 config SERIAL_VR41XX
 	tristate "NEC VR4100 series Serial Interface Unit support"
 	depends on CPU_VR41XX

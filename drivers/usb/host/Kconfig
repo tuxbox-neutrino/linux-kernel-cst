@@ -17,6 +17,33 @@ config USB_C67X00_HCD
 	  To compile this driver as a module, choose M here: the
 	  module will be called c67x00.
 
+config CX2450X_USB
+	bool "Conexant CX2450x (Nevis) USB support"
+	depends on USB && USB_ARCH_HAS_EHCI && ARCH_NEVIS
+	select USB_EHCI_HCD
+	select USB_EHCI_ROOT_HUB_TT
+	select USB_EHCI_SPLIT_ISO
+	---help---
+	  Enable this option to support the EHCI USB-Controller(s) included in
+	  the Conexant CX2450x (Nevis) SoC.
+
+config CX2450X_USB0
+	bool "enable USB port 1 on CX2450x"
+	depends on CX2450X_USB
+	default y
+
+config CX2450X_USB1
+	bool "enable USB port 2 on CX2450x"
+	depends on CX2450X_USB
+	default n
+	---help---
+	If you enable this option, the second USB-Controller available in
+	Chip revision C and later. Note that this controller needs the correct
+	GPIO-Setup from a bootloader or the init process, because this USB-port
+	can be routed to various GPIO-pins.
+
+if !ARCH_NEVIS
+
 config USB_EHCI_HCD
 	tristate "EHCI HCD (USB 2.0) support"
 	depends on USB && USB_ARCH_HAS_EHCI
@@ -236,6 +263,7 @@ config USB_UHCI_HCD
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called uhci-hcd.
+endif
 
 config USB_U132_HCD
 	tristate "Elan U132 Adapter Host Controller"

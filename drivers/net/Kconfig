@@ -782,6 +782,8 @@ config WD80x3
 	  To compile this driver as a module, choose M here. The module
 	  will be called wd.
 
+source "drivers/net/cnxt_emac/Kconfig"
+
 config ULTRAMCA
 	tristate "SMC Ultra MCA support"
 	depends on NET_VENDOR_SMC && MCA

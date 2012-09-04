@@ -18,7 +18,7 @@
 #include <asm/io.h>
 #include <asm/system.h>
 #include <asm/uaccess.h>
-
+#include <asm/arm11jmp.h>
 /*
  * libgcc functions - functions that are used internally by the
  * compiler...  (prototypes are not correct though, but that
@@ -44,6 +44,7 @@ extern void __aeabi_lmul(void);
 extern void __aeabi_uidiv(void);
 extern void __aeabi_uidivmod(void);
 extern void __aeabi_ulcmp(void);
+extern void __aeabi_uldivmod(void);
 
 extern void fpundefinstr(void);
 extern void fp_enter(void);
@@ -153,6 +154,7 @@ EXPORT_SYMBOL(__aeabi_lmul);
 EXPORT_SYMBOL(__aeabi_uidiv);
 EXPORT_SYMBOL(__aeabi_uidivmod);
 EXPORT_SYMBOL(__aeabi_ulcmp);
+EXPORT_SYMBOL(__aeabi_uldivmod);
 #endif
 
 	/* bitops */
@@ -178,6 +180,12 @@ EXPORT_SYMBOL(_find_first_zero_bit_be);
 EXPORT_SYMBOL(_find_next_zero_bit_be);
 EXPORT_SYMBOL(_find_first_bit_be);
 EXPORT_SYMBOL(_find_next_bit_be);
+#endif
+
+/* setjmp and longjmp functions */
+#ifdef CONFIG_SETJMP_INCLUDED
+EXPORT_SYMBOL(_setjmp);
+EXPORT_SYMBOL(longjmp);
 #endif
 
 EXPORT_SYMBOL(copy_page);

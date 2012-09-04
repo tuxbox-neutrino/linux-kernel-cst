@@ -54,8 +54,14 @@
  * The module space lives between the addresses given by TASK_SIZE
  * and PAGE_OFFSET - it must be within 32MB of the kernel text.
  */
-#define MODULE_END		(PAGE_OFFSET)
-#define MODULE_START		(MODULE_END - 16*1048576)
+
+#if (defined(CONFIG_ARCH_PECOS) || defined(CONFIG_ARCH_NEVIS))
+#define MODULE_START            (PAGE_OFFSET + TEXT_OFFSET + CONFIG_CNXT_MODULE_START_OFFSET)
+#define MODULE_END              (MODULE_START + CONFIG_CNXT_MODULE_ADDRESS_SPACE_SIZE)
+#else
+#define MODULE_END              (PAGE_OFFSET)
+#define MODULE_START            (MODULE_END - 16*1048576)
+#endif
 
 #if TASK_SIZE > MODULE_START
 #error Top of user space clashes with start of module space

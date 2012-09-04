@@ -327,6 +327,44 @@ ENTRY(__aeabi_idivmod)
 
 #endif
 
+#ifdef CONFIG_AEABI
+
+/* Patch added by Conexant
+    Inputs:-    r0, r1   -   divisor
+                r2, r3   -   divident  ( the higher bit is ignored in current implementation as we call __do_div64
+    Outputs:-   r0, r1   -   quotient
+                r2, r3   -   remainder
+*/
+
+ENTRY(__aeabi_uldivmod)
+      stmfd    sp!, {r4, ip, lr}
+
+#ifdef __ARMEB__  /* If we have big-endian then move r3 to r4, because __do_div64 has 32-bit divisor */
+      mov      r4, r3
+#else
+      mov      r4, r2
+#endif
+      bl       __do_div64    /* The result is in r2 and r3 . and this is also written in assembly */
+
+      mov      r4, r0
+      mov      r0, r2
+      mov      r2, r4
+
+      mov      r4, r1
+      mov      r1, r3
+      mov      r3, r4
+
+#ifndef __ARMEB__
+      mov      r4, r2
+      mov      r2, r3
+      mov      r3, r4
+#endif
+
+      ldmfd    sp!, {r4, ip, lr}
+      mov      pc, lr
+#endif
+
+
 Ldiv0:
 
 	str	lr, [sp, #-8]!

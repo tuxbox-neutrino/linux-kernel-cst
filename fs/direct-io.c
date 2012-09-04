@@ -1000,7 +1000,16 @@ direct_io_worker(int rw, struct kiocb *iocb, struct inode *inode,
 		}
 		dio->total_pages += (bytes + PAGE_SIZE - 1) / PAGE_SIZE;
 		dio->curr_user_address = user_addr;
-	
+#if defined(CONFIG_ARCH_NEVIS)
+		/*.
+		 * Invalidate user address for read requests (can corrupt data
+		 * in case of non-page color aligned user pages)..
+		 */
+		if(rw == READ) {
+			if (dmac_inv_range)
+				dmac_inv_range((void *) user_addr, (void *) user_addr + bytes);
+		}
+#endif
 		ret = do_direct_IO(dio);
 
 		dio->result += iov[seg].iov_len -

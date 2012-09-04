@@ -68,7 +68,9 @@ extern int get_hardware_list(char *);
 extern int get_stram_list(char *);
 extern int get_exec_domain_list(char *);
 extern int get_dma_list(char *);
-
+#ifdef CONFIG_ARCH_NEVIS
+extern int get_idle_list(char *);
+#endif
 static int proc_calc_metrics(char *page, char **start, off_t off,
 				 int count, int *eof, int len)
 {
@@ -79,6 +81,15 @@ static int proc_calc_metrics(char *page, char **start, off_t off,
 	if (len<0) len = 0;
 	return len;
 }
+
+#ifdef CONFIG_ARCH_NEVIS
+static int mipidle_read_proc(char *page, char **start, off_t off,
+		int count, int *eof, void *data)
+{
+	int len = get_idle_list(page);
+	return proc_calc_metrics(page, start, off, count, eof, len);
+}
+#endif
 
 static int loadavg_read_proc(char *page, char **start, off_t off,
 				 int count, int *eof, void *data)
@@ -837,6 +848,9 @@ void __init proc_misc_init(void)
 		{"loadavg",     loadavg_read_proc},
 		{"uptime",	uptime_read_proc},
 		{"meminfo",	meminfo_read_proc},
+#ifdef CONFIG_ARCH_NEVIS
+		{"mipidle",     mipidle_read_proc},
+#endif
 		{"version",	version_read_proc},
 #ifdef CONFIG_PROC_HARDWARE
 		{"hardware",	hardware_read_proc},

@@ -1424,21 +1424,20 @@ unsigned int ata_sff_qc_issue(struct ata_queued_cmd *qc)
 		if (qc->tf.flags & ATA_TFLAG_POLLING)
 			ata_qc_set_polling(qc);
 
-		ata_tf_to_host(ap, &qc->tf);
 		ap->hsm_task_state = HSM_ST_LAST;
+		ata_tf_to_host(ap, &qc->tf);
 
 		if (qc->tf.flags & ATA_TFLAG_POLLING)
 			ata_pio_queue_task(ap, qc, 0);
-
 		break;
 
 	case ATA_PROT_DMA:
 		WARN_ON(qc->tf.flags & ATA_TFLAG_POLLING);
 
+		ap->hsm_task_state = HSM_ST_LAST;
 		ap->ops->sff_tf_load(ap, &qc->tf);  /* load tf registers */
 		ap->ops->bmdma_setup(qc);	    /* set up bmdma */
 		ap->ops->bmdma_start(qc);	    /* initiate bmdma */
-		ap->hsm_task_state = HSM_ST_LAST;
 		break;
 
 	case ATA_PROT_PIO:

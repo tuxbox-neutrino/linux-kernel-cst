@@ -262,10 +262,10 @@
 /* 250 */	CALL(sys_epoll_create)
 		CALL(ABI(sys_epoll_ctl, sys_oabi_epoll_ctl))
 		CALL(ABI(sys_epoll_wait, sys_oabi_epoll_wait))
-	 	CALL(sys_remap_file_pages)
+		CALL(sys_remap_file_pages)
 		CALL(sys_ni_syscall)	/* sys_set_thread_area */
 /* 255 */	CALL(sys_ni_syscall)	/* sys_get_thread_area */
- 		CALL(sys_set_tid_address)
+		CALL(sys_set_tid_address)
 		CALL(sys_timer_create)
 		CALL(sys_timer_settime)
 		CALL(sys_timer_gettime)

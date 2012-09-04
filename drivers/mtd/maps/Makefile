@@ -12,6 +12,7 @@ obj-$(CONFIG_MTD_CDB89712)	+= cdb89712.o
 obj-$(CONFIG_MTD_ARM_INTEGRATOR)+= integrator-flash.o
 obj-$(CONFIG_MTD_BAST)		+= bast-flash.o
 obj-$(CONFIG_MTD_CFI_FLAGADM)	+= cfi_flagadm.o
+obj-$(CONFIG_MTD_NEVIS_FLASH)	+= cx2450x-flash.o
 obj-$(CONFIG_MTD_DC21285)	+= dc21285.o
 obj-$(CONFIG_MTD_DILNETPC)	+= dilnetpc.o
 obj-$(CONFIG_MTD_L440GX)	+= l440gx.o

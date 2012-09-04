@@ -1,0 +1,79 @@
+if ARCH_NEVIS
+
+config CNXT_EMAC
+	tristate "CNXT 10/100 EMAC Driver Support"
+	depends on NET
+	---help---
+	This driver support CNXT EMAC Driver.Supports 2 EMAC core(EMAC0/EMAC1).
+
+config CNXT_EMAC0_ENABLE
+	bool "Enable EMAC0 interface"
+	depends on CNXT_EMAC
+	default y
+	---help---
+	Enables EMAC0 interface in driver.By default this interface is enabled.
+
+config CNXT_EMAC0_2xMODE_ENABLE
+	bool "Enable OverClocked MII(2xMode)"
+	depends on CNXT_EMAC0_ENABLE
+	default 0
+	---help---
+	Enables EMAC0 interface in 2xMode[OverClocked MII].Resulting in 200Mbps mode.
+
+config EMAC0_MDIO_SUPPORT
+	bool "Support MDIO operation in EMAC0"
+	depends on CNXT_EMAC0_ENABLE
+	default 0
+	---help---
+	Select 1- MDIO support required, 0- MDIO support not required.
+
+config EMAC0_MDIO_ADDRESS
+	hex "EMAC0 MDIO operation address"
+	depends on EMAC0_MDIO_SUPPORT
+	default 0xFFFFFFFF
+	---help---
+	Select MDIO address for EMAC0 interface, Default will be 0xFFFFFFFF
+	(driver will detect MDIO address).
+
+config CNXT_EMAC1_ENABLE
+	bool "Enable EMAC1 interface"
+	depends on CNXT_EMAC
+	default 0
+	---help---
+	Enables EMAC1 interface in driver.
+
+config CNXT_EMAC1_2xMODE_ENABLE
+	bool "Enable OverClocked MII(2xMode)"
+	depends on CNXT_EMAC1_ENABLE
+	default 0
+	---help---
+	Enables EMAC1 interface in 2xMode[OverClocked MII].Resulting in 200Mbps mode.
+
+config EMAC1_MDIO_SUPPORT
+	bool "Support MDIO operation in EMAC1"
+	depends on CNXT_EMAC1_ENABLE
+	default 0
+	---help---
+	Select 1- MDIO support required, 0- MDIO support not required.
+
+config EMAC1_MDIO_ADDRESS
+	hex "EMAC1 MDIO operation address"
+	depends on EMAC1_MDIO_SUPPORT
+	default 0xFFFFFFFF
+	---help---
+	Select MDIO address for EMAC1 interface, Default will be 0xFFFFFFFF
+	(driver will detect MDIO address).
+
+config MII_GPIO_BANK
+	int "MII_GPIO_BANK"
+	default 3
+	help
+	GPIO Bank Number.
+
+config MII_GPIO_BIT
+	int "MII_GPIO_BIT"
+	default 31
+	help
+	GPIO bit number.
+
+endif

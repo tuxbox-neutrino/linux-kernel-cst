@@ -1,0 +1,224 @@
+if ARCH_NEVIS
+
+menu "Conexant CX2450X (Nevis) SoC support"
+	depends on ARCH_NEVIS
+
+config	MACH_NEVIS
+	bool "Nevis IRD board support"
+	help
+	 Enables CX2450X based IRDs
+
+config  ED_COOLSTREAM_HD1
+	depends on MACH_NEVIS
+	bool  "CoolStream HD1 IRD"
+	default y
+
+config  ARCH_CNXT_EDWARDS
+	bool "Conexant Edwards API"
+	default y
+	help
+	 Enables the use of Conexant Edwards API.
+
+config  CNXT_PHYS_OFFSET
+	depends on ARCH_CNXT_EDWARDS
+	hex "PHYS Offset"
+	default 0x0
+	help
+	 PHYS_OFFSET is the address at which the kernel thinks
+	 RAM begins.  If there is an address hole/alias at
+	 physical address 0, then PHYS_OFFSET would probably
+	 NOT be 0.
+
+config  CNXT_TEXT_OFFSET
+	depends on ARCH_CNXT_EDWARDS
+	hex "Kernel Text Offset"
+	default 0x0f048000
+	help
+	 TEXT_OFFSET tells the kernel where to begin its
+	 text section relative to where it thinks the beginning
+	 of RAM is.  ie.  The kernel is loaded at
+	 TEXT_OFFSET + PHYS_OFFSET.  The kernel requires that
+	 this address end in 0xYYYZ8000.  Conexant requires that
+	 Z be greater than 0.
+
+config  CNXT_MODULE_START_OFFSET
+	depends on ARCH_CNXT_EDWARDS
+	hex "Module address space start offset"
+	default 0x00FB8000
+
+config  CNXT_MODULE_ADDRESS_SPACE_SIZE
+	depends on ARCH_CNXT_EDWARDS
+	hex "Module address space size"
+	default 0x1000000
+
+config  CNXT_VMALLOC_SIZE
+	depends on ARCH_CNXT_EDWARDS
+	hex "VMALLOC size"
+	default 0x18000000
+
+config  CNXT_DECARM_PHY_ADDRESS
+	depends on ARCH_CNXT_EDWARDS
+	hex "DECARM Physical Start Address"
+	default 0x17800000
+	help
+	 This is the physical address at which the kernel
+	 will reserve memory for use by the DECARM slave CPU.
+	 Be sure to avoid any overlapping memory regions with
+	 the KAL memory.
+
+config  CNXT_DECARM_CODE_MEM_SIZE
+	depends on ARCH_CNXT_EDWARDS
+	hex "Conexant DECARM Code Memory Size"
+	default 0x00300000
+	help
+	 This tells the kernel how much memory is being
+	 reserved for MALONE. The default is 3MB.
+
+config  CNXT_DECARM_SHARED_MEM_SIZE
+	depends on ARCH_CNXT_EDWARDS
+	hex "Conexant DECARM Shared Memory Size"
+	default 0x00100000
+	help
+	 This tells the kernel how much memory is being
+	 reserved for MALONE shared memory. This memory is
+	 is shared between the host CPU and the slave. The
+	 default is 1MB.
+
+menu "GPIO MUX defaults"
+depends on ARCH_CNXT_EDWARDS
+config PLL_CONFIG0_REG_DEFAULT
+	hex "PLL CONFIG 0 register"
+	default CONFIG_PLL_CONFIG0_REG_DEFAULT
+
+config PLL_PIN_ALT_FUNC_REG_DEFAULT
+	hex "PLL PIN ALT FUNC register"
+	default CONFIG_PLL_PIN_ALT_FUNC_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX0_REG_DEFAULT
+	hex "PLL PIN GPIO MUX0 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX0_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX1_REG_DEFAULT
+	hex "PLL PIN GPIO MUX1 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX1_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX2_REG_DEFAULT
+	hex "PLL PIN GPIO MUX2 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX2_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX3_REG_DEFAULT
+	hex "PLL PIN GPIO MUX3 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX3_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX4_REG_DEFAULT
+	hex "PLL PIN GPIO MUX4 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX4_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX5_REG_DEFAULT
+	hex "PLL PIN GPIO MUX5 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX5_REG_DEFAULT
+
+config PLL_PIN_GPIO_MUX6_REG_DEFAULT
+	hex "PLL PIN GPIO MUX6 REG"
+	default CONFIG_PLL_PIN_GPIO_MUX6_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX0_REG_DEFAULT
+	hex "SREG 2ND PIN MUX0 REG"
+	default CONFIG_SREG_2ND_PIN_MUX0_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX1_REG_DEFAULT
+	hex "SREG 2ND PIN MUX1 REG"
+	default CONFIG_SREG_2ND_PIN_MUX1_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX2_REG_DEFAULT
+	hex "SREG 2ND PIN MUX2 REG"
+	default CONFIG_SREG_2ND_PIN_MUX2_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX3_REG_DEFAULT
+	hex "SREG 2ND PIN MUX3 REG"
+	default CONFIG_SREG_2ND_PIN_MUX3_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX4_REG_DEFAULT
+	hex "SREG 2ND PIN MUX4 REG"
+	default CONFIG_SREG_2ND_PIN_MUX4_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX5_REG_DEFAULT
+	hex "SREG 2ND PIN MUX5 REG"
+	default CONFIG_SREG_2ND_PIN_MUX5_REG_DEFAULT
+
+config SREG_2ND_PIN_MUX6_REG_DEFAULT
+	hex "SREG 2ND PIN MUX6 REG"
+	default CONFIG_SREG_2ND_PIN_MUX6_REG_DEFAULT
+
+endmenu
+
+menu "GPIO options"
+	depends on MACH_NEVIS
+config	PIO_INIT_ON_BOOT
+	bool "Initialize GPIO's on boot"
+	default y
+	help
+	 If enabled, all exisiting GPIO pins will be 
+	 initialized to be inputs in the early boot.
+
+config	PIO_EXCL_MASK_PIO_031_000
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO  31 to   0"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_063_032
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO  63 to  32"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_095_064
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO  95 to  64"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_127_096
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO 127 to  96"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_159_128
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO 159 to 128"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_191_160
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO 191 to 160"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+config	PIO_EXCL_MASK_PIO_223_192
+	depends on PIO_INIT_ON_BOOT
+	hex "Exclude mask for PIO 223 to 192"
+	default 0x00000000
+	help
+	 GPIO's marked with 1 here are excluded from
+	 the initialization.
+
+endmenu
+
+endmenu
+
+endif

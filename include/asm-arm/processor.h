@@ -23,8 +23,10 @@
 #include <asm/types.h>
 
 #ifdef __KERNEL__
-#define STACK_TOP	((current->personality == PER_LINUX_32BIT) ? \
+#define STACK_TOP	((current->personality & ADDR_LIMIT_32BIT) ? \
 			 TASK_SIZE : TASK_SIZE_26)
+/*#define STACK_TOP	((current->personality == PER_LINUX_32BIT) ? \
+			 TASK_SIZE : TASK_SIZE_26) */
 #define STACK_TOP_MAX	TASK_SIZE
 #endif
 
@@ -112,9 +114,9 @@ extern int kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
 static inline void prefetch(const void *ptr)
 {
 	__asm__ __volatile__(
-		"pld\t%0"
+		"pld\t%a0"
 		:
-		: "o" (*(char *)ptr)
+		: "p" (ptr)
 		: "cc");
 }
 

@@ -158,6 +158,9 @@
 
 #define PORT_SC26XX	82
 
+/* Conexant CX2450X */
+#define PORT_CNXT	83
+
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>

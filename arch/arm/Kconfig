@@ -80,6 +80,10 @@ config GENERIC_HARDIRQS
 	bool
 	default y
 
+config SETJMP_INCLUDED
+        bool
+        default y
+
 config STACKTRACE_SUPPORT
 	bool
 	default y
@@ -146,6 +150,10 @@ config FIQ
 
 config ARCH_MTD_XIP
 	bool
+
+config GENERIC_HARDIRQS_NO__DO_IRQ
+	bool
+	def_bool y
 
 if OPROFILE
 
@@ -383,6 +391,14 @@ config ARCH_ORION5X
 	  Support for the following Marvell Orion 5x series SoCs:
 	  Orion-1 (5181), Orion-NAS (5182), Orion-2 (5281.)
 
+config ARCH_NEVIS
+	bool "Nevis"
+	depends on MMU
+	select GENERIC_GPIO
+	select HAVE_GPIO_LIB
+	help
+	  Support for Conexant 2450x processor.
+
 config ARCH_PNX4008
 	bool "Philips Nexperia PNX4008 Mobile"
 	help
@@ -504,6 +520,8 @@ source "arch/arm/mach-ixp23xx/Kconfig"
 
 source "arch/arm/mach-pxa/Kconfig"
 
+source "arch/arm/mach-nevis/Kconfig"
+
 source "arch/arm/mach-sa1100/Kconfig"
 
 source "arch/arm/plat-omap/Kconfig"
@@ -582,6 +600,16 @@ if !MMU
 source "arch/arm/Kconfig-nommu"
 endif
 
+config ARM_ERRATA_411920
+	bool "Workaround for the global I cache invalidation on ARM1136"
+	depends on CPU_V6 && !SMP
+	default n
+	help
+	  Invalidation of the Instruction Cache operation can
+	  fail. This Erratum is present in 1136, 1156 and 1176. It
+	  does not affect the MPCore. This option enables the ARM Ltd.
+	  recommended workaround.
+
 endmenu
 
 source "arch/arm/common/Kconfig"
@@ -615,7 +643,7 @@ config ISA_DMA_API
 	bool
 
 config PCI
-	bool "PCI support" if ARCH_INTEGRATOR_AP || ARCH_VERSATILE_PB || ARCH_IXP4XX || ARCH_KS8695 || MACH_ARMCORE
+	bool "PCI support" if ARCH_INTEGRATOR_AP || ARCH_VERSATILE_PB || ARCH_IXP4XX || ARCH_KS8695 || MACH_ARMCORE || ARCH_NEVIS
 	help
 	  Find out whether you have a PCI motherboard. PCI is the name of a
 	  bus system, i.e. the way the CPU talks to the other stuff inside
