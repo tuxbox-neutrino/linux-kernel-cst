@@ -120,7 +120,7 @@ apply_relocate(Elf32_Shdr *sechdrs, const char *strtab, unsigned int symindex,
 			offset += sym->st_value - loc;
 			if (offset & 3 ||
 			    offset <= (s32)0xfe000000 ||
-			    offset >= (s32)0x02000000) {
+			    offset >= (s32)0x03000000) {
 				pr_err("%s: section %u reloc %u sym '%s': relocation %u out of range (%#lx -> %#x)\n",
 				       module->name, relindex, i, symname,
 				       ELF32_R_TYPE(rel->r_info), loc,

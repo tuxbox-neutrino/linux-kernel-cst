@@ -15,6 +15,8 @@ lib-y		:= backtrace.o changebit.o csumipv6.o csumpartial.o   \
 		   ucmpdi2.o lib1funcs.o div64.o sha1.o               \
 		   io-readsb.o io-writesb.o io-readsl.o io-writesl.o
 
+lib-$(CONFIG_SETJUMP_INCLUDED)		+= cnxtlongjmp.o cnxtsetjmp.o
+
 mmu-y	:= clear_user.o copy_page.o getuser.o putuser.o
 
 # the code in uaccess.S is not preemption safe and

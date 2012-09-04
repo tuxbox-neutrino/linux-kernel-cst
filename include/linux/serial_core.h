@@ -202,6 +202,9 @@
 /* VIA VT8500 SoC */
 #define PORT_VT8500	97
 
+/* Conexant CX2450X */
+#define PORT_CNXT	89
+
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>

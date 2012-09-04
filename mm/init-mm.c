@@ -4,6 +4,7 @@
 #include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/cpumask.h>
+#include <linux/module.h>
 
 #include <asm/atomic.h>
 #include <asm/pgtable.h>

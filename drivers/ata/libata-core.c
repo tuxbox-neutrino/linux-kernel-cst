@@ -3748,7 +3748,7 @@ int sata_link_hardreset(struct ata_link *link, const unsigned long *timing,
 	/* Couldn't find anything in SATA I/II specs, but AHCI-1.1
 	 * 10.4.2 says at least 1 ms.
 	 */
-	ata_msleep(link->ap, 1);
+	ata_msleep(link->ap, 2);
 
 	/* bring link back */
 	rc = sata_link_resume(link, timing, deadline);
