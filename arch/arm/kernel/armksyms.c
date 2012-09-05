@@ -46,6 +46,7 @@ extern void __aeabi_lmul(void);
 extern void __aeabi_uidiv(void);
 extern void __aeabi_uidivmod(void);
 extern void __aeabi_ulcmp(void);
+extern void __aeabi_uldivmod(void);
 
 extern void fpundefinstr(void);
 
@@ -137,6 +138,7 @@ EXPORT_SYMBOL(__aeabi_lmul);
 EXPORT_SYMBOL(__aeabi_uidiv);
 EXPORT_SYMBOL(__aeabi_uidivmod);
 EXPORT_SYMBOL(__aeabi_ulcmp);
+EXPORT_SYMBOL(__aeabi_uldivmod);
 #endif
 
 	/* bitops */
@@ -167,4 +169,14 @@ EXPORT_SYMBOL(_find_next_bit_be);
 #ifdef CONFIG_FUNCTION_TRACER
 EXPORT_SYMBOL(mcount);
 EXPORT_SYMBOL(__gnu_mcount_nc);
+#endif
+
+#ifdef CONFIG_ARM_PATCH_PHYS_VIRT
+EXPORT_SYMBOL(__pv_phys_offset);
+#endif
+
+#ifdef CONFIG_SETJMP_INCLUDED
+#include <asm/cnxtsetjmp.h>
+EXPORT_SYMBOL(_setjmp);
+EXPORT_SYMBOL(longjmp);
 #endif

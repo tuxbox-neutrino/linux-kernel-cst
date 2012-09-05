@@ -186,6 +186,9 @@
 #define PORT_ALTERA_JTAGUART	91
 #define PORT_ALTERA_UART	92
 
+/* Conexant CX2450X */
+#define PORT_CNXT	93
+
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>

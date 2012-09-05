@@ -268,6 +268,14 @@ void __iomem * __arm_ioremap_pfn_caller(unsigned long pfn,
 	if (pfn >= 0x100000 && (__pfn_to_phys(pfn) & ~SUPERSECTION_MASK))
 		return NULL;
 
+	/*
+	 * Don't allow RAM to be mapped - this causes problems with ARMv6+
+	 */
+#if 0
+	if (WARN_ON(pfn_valid(pfn)))
+		return NULL;
+#endif
+
 	type = get_mem_type(mtype);
 	if (!type)
 		return NULL;
