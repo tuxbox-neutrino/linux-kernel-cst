@@ -1127,6 +1127,11 @@ MODULE_LICENSE ("GPL");
 #define PLATFORM_DRIVER		ehci_mxc_driver
 #endif
 
+#ifdef CONFIG_CX2450X_USB
+#include "ehci-cx2450x.c"
+#define PLATFORM_DRIVER		ehci_cx2450x_driver
+#endif
+
 #ifdef CONFIG_SOC_AU1200
 #include "ehci-au1xxx.c"
 #define	PLATFORM_DRIVER		ehci_hcd_au1xxx_driver

@@ -182,6 +182,9 @@
 /* Aeroflex Gaisler GRLIB APBUART */
 #define PORT_APBUART    90
 
+/* Conexant CX2450X */
+#define PORT_CNXT	93
+
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>

@@ -248,6 +248,16 @@ config AX88796_93CX6
 	help
 	  Select this if your platform comes with an external 93CX6 eeprom.
 
+config ARCVMAC
+	tristate "ARC VMAC ethernet support"
+	depends on HAS_DMA
+	select MII
+	select PHYLIB
+	select CRC32
+
+	help
+	  MAC present on Zoran Quatro43XX
+
 config MACE
 	tristate "MACE (Power Mac ethernet) support"
 	depends on PPC_PMAC && PPC32

@@ -136,6 +136,26 @@ struct tag_acorn {
 	__u8 adfsdrives;
 };
 
+/* conexant pecos/nevis specific for reading the MAC address */
+#define	ATAG_MAC	0x5441000A
+
+struct tag_mac {
+          __u8 mac_addr[6];
+};
+
+/* conexant pecos/nevis specific for specifying the reserved memory
+ * locations.
+ * see arch/arm/mach-nevis/mach.c
+ */
+#define	ATAG_DECARM	0x5441000B
+
+struct tag_decarm {
+	__u32 uSize;
+	__u32 uStart;
+	__u32 uSharedRAMSize;
+	__u32 uSharedRAMStart;
+};
+
 /* footbridge memory clock, see arch/arm/mach-footbridge/arch.c */
 #define ATAG_MEMCLK	0x41000402
 
@@ -160,6 +180,12 @@ struct tag {
 		 * Acorn specific
 		 */
 		struct tag_acorn	acorn;
+
+		/*
+		 * Conexant Nevis / Pecos specific
+		 */
+		struct tag_mac mac;
+		struct tag_decarm decarm;
 
 		/*
 		 * DC21285 specific

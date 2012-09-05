@@ -611,17 +611,21 @@ static inline void ftrace_dump(void) { }
  * strict type-checking.. See the
  * "unnecessary" pointer comparison.
  */
+#ifndef min
 #define min(x, y) ({				\
 	typeof(x) _min1 = (x);			\
 	typeof(y) _min2 = (y);			\
 	(void) (&_min1 == &_min2);		\
 	_min1 < _min2 ? _min1 : _min2; })
+#endif
 
+#ifndef max
 #define max(x, y) ({				\
 	typeof(x) _max1 = (x);			\
 	typeof(y) _max2 = (y);			\
 	(void) (&_max1 == &_max2);		\
 	_max1 > _max2 ? _max1 : _max2; })
+#endif
 
 /**
  * clamp - return a value clamped to a given range with strict typechecking

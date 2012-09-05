@@ -386,6 +386,10 @@ config MTD_FORTUNET
 	  This enables access to the Flash on the FortuNet board.  If you
 	  have such a board, say 'Y'.
 
+config MTD_NEVIS_FLASH
+	tristate "CFI Flash defice(s) mapped on NXP CX2450x (Nevis)"
+	depends on ARM && MTD_CFI
+
 config MTD_AUTCPU12
 	tristate "NV-RAM mapping AUTCPU12 board"
 	depends on ARCH_AUTCPU12

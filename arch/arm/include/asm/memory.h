@@ -32,8 +32,8 @@
  * TASK_UNMAPPED_BASE - the lower boundary of the mmap VM area
  */
 #define PAGE_OFFSET		UL(CONFIG_PAGE_OFFSET)
-#define TASK_SIZE		(UL(CONFIG_PAGE_OFFSET) - UL(0x01000000))
-#define TASK_UNMAPPED_BASE	(UL(CONFIG_PAGE_OFFSET) / 3)
+#define TASK_SIZE		(UL(CONFIG_PAGE_OFFSET) - UL(0x01800000))
+#define TASK_UNMAPPED_BASE	((UL(CONFIG_PAGE_OFFSET) + UL(0x10000000))/ 3)
 
 /*
  * The maximum size of a 26-bit user space task.
@@ -45,7 +45,7 @@
  * and PAGE_OFFSET - it must be within 32MB of the kernel text.
  */
 #ifndef CONFIG_THUMB2_KERNEL
-#define MODULES_VADDR		(PAGE_OFFSET - 16*1024*1024)
+#define MODULES_VADDR		(PAGE_OFFSET - 24*1024*1024)
 #else
 /* smaller range for Thumb-2 symbols relocation (2^24)*/
 #define MODULES_VADDR		(PAGE_OFFSET - 8*1024*1024)
@@ -86,6 +86,8 @@
 
 #define CONSISTENT_END		(0xffe00000UL)
 #define CONSISTENT_BASE		(CONSISTENT_END - CONSISTENT_DMA_SIZE)
+
+#define PHYS_OFFSET UL(0x00000000)
 
 #else /* CONFIG_MMU */
 

@@ -1506,4 +1506,61 @@ config SERIAL_GRLIB_GAISLER_APBUART_CONSOLE
 	help
 	Support for running a console on the GRLIB APBUART
 
+config SERIAL_CX2450X
+	bool "Conexant CX2450x SoC UART support"
+	depends on ARCH_NEVIS
+	select SERIAL_CORE
+	default y
+	help
+	  The Conexant CX2450x SoC has three 16550 style UARTs. Each of them
+	  can be routed to various pins, but note that the pin routing must
+	  be correctly setup by the Bootloader/BIOS.
+
+	  This driver reads the pin config and enables all configured ports.
+
+	  If you enable the serial console support for this driver, the
+	  lowest configured port is used as the system console
+
+choice
+	prompt "Default Baud Rate for CX2450x SoC UATR's"
+	depends on SERIAL_CX2450X
+	default SERIAL_CX2450X_BAUDRATE_115200
+
+config SERIAL_CX2450X_BAUDRATE_230400
+	bool "230400 Baud"
+
+config SERIAL_CX2450X_BAUDRATE_115200
+	bool "115200 Baud"
+
+config SERIAL_CX2450X_BAUDRATE_57600
+	bool "57600 Baud"
+
+config SERIAL_CX2450X_BAUDRATE_38400
+	bool "38400 Baud"
+
+config SERIAL_CX2450X_BAUDRATE_19200
+	bool "19200 Baud"
+
+config SERIAL_CX2450X_BOOTMSG_9600
+	bool "9600 Baud"
+
+endchoice
+
+config SERIAL_CX2450X_CONSOLE
+	bool "Conexant CX2450x SoC UART console support"
+	depends on SERIAL_CX2450X=y
+	select SERIAL_CORE_CONSOLE
+	default y
+	help
+	  Provides support for serial console.
+	  The lowest configured port is used for the system console.
+
+config SERIAL_CX2450X_BOOTMSG
+	bool "Print early boot messages on Conexant CX2450x SoC UART's"
+	depends on SERIAL_CX2450X=y
+	default y
+	help
+	  Enable this option to see the the full boot message. If disabled
+	  you will see the bootmessage from late the UART-init stage.
+
 endmenu

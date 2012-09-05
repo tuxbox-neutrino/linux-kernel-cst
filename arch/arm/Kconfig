@@ -369,6 +369,19 @@ config ARCH_NETX
 	help
 	  This enables support for systems based on the Hilscher NetX Soc
 
+config ARCH_NEVIS
+	bool "NXP CX2450x (Nevis)"
+	depends on MMU
+	select CPU_V6
+	select GENERIC_GPIO
+	select ARCH_REQUIRE_GPIOLIB
+	select VMSPLIT_2G
+	select ARCH_USES_GETTIMEOFFSET
+	select ARCH_HAS_HOLES_MEMORYMODEL
+	select CLKDEV_LOOKUP
+	help
+	  Support for NXP CX2450x SoC.
+
 config ARCH_H720X
 	bool "Hynix HMS720x-based"
 	select CPU_ARM720T
@@ -921,6 +934,8 @@ source "arch/arm/mach-ux500/Kconfig"
 source "arch/arm/mach-versatile/Kconfig"
 
 source "arch/arm/mach-w90x900/Kconfig"
+
+source "arch/arm/mach-nevis/Kconfig"
 
 # Definitions to make life easier
 config ARCH_ACORN
