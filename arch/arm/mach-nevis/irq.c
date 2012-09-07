@@ -199,11 +199,13 @@ static void ack_irq_gpio(u32 irq)
 
 static void mask_irq_gpio(u32 irq)
 {
+	irq -= IRQ_GPIO(0);
 	*piointena_reg[irq / 32] &= ~irq_mask[irq % 32];
 }
 
 static void unmask_irq_gpio(u32 irq)
 {
+	irq -= IRQ_GPIO(0);
 	*piointena_reg[irq / 32] |= irq_mask[irq % 32];
 }
 
@@ -259,7 +261,7 @@ static int set_type_irq_gpio(u32 irq, u32 type)
 
 static void nevis_irq_handle_gpio_chain(unsigned int irq, struct irq_desc *desc)
 {
-	u32 bank, bit, irqno;
+	u32 bank, bit /*, irqno*/;
 	u32 active;
 
 	for (bank = 0; bank < 7; bank++) {
