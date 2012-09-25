@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.34.13
-# Wed Sep  5 14:05:30 2012
+# Tue Sep 18 11:59:59 2012
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -1365,6 +1365,7 @@ CONFIG_STAGING=y
 # CONFIG_PRISM2_USB is not set
 # CONFIG_ECHO is not set
 # CONFIG_OTUS is not set
+CONFIG_RT2870=m
 # CONFIG_COMEDI is not set
 # CONFIG_ASUS_OLED is not set
 CONFIG_RTL8192U=m
