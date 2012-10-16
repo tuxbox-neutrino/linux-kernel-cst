@@ -1,10 +1,7 @@
 /*
  * ARC VMAC Driver
  *
- * Copyright (C) 2003-2006 Codito Technologies, for linux-2.4 port
- * Copyright (C) 2006-2007 Celunite Inc, for linux-2.6 port
- * Copyright (C) 2007-2008 Sagem Communications, Fehmi HAFSI
- * Copyright (C) 2009-2011 Sagem Communications, Andreas Fenkart
+ * Copyright (C) 2009-2012 Andreas Fenkart
  * All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +18,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * Initial work taken from arc linux distribution, any bugs are mine
+ *
+ *	-----<snip>-----
+ * Copyright (C) 2003-2006 Codito Technologies, for linux-2.4 port
+ * Copyright (C) 2006-2007 Celunite Inc, for linux-2.6 port
+ * Authors: amit.bhor@celunite.com, sameer.dhavale@celunite.com
+ *	-----<snip>-----
  */
 
 #ifndef _ARCVMAC_H
@@ -31,7 +35,7 @@
 
 /* Buffer descriptors */
 #define TX_BDT_LEN		128    /* Number of receive BD's */
-#define RX_BDT_LEN		128   /* Number of transmit BD's */
+#define RX_BDT_LEN		128    /* Number of transmit BD's */
 
 /* BD poll rate, in 1024 cycles. @100Mhz: x * 1024 cy * 10ns = 1ms */
 #define POLLRATE_TIME		200
@@ -43,7 +47,7 @@
 /* 14 bytes of ethernet header, 4 bytes VLAN, FCS,
  * plus extra pad to prevent buffer chaining of
  * maximum sized ethernet packets (1514 bytes) */
-#define	VMAC_BUFFER_PAD		(ETH_HLEN + 4 + ETH_FCS_LEN + 4)
+#define VMAC_BUFFER_PAD		(ETH_HLEN + 4 + ETH_FCS_LEN + 4)
 
 /* VMAC register definitions, offsets in bytes */
 #define VMAC_ID			0x00
@@ -117,7 +121,7 @@
 
 /* common combinations */
 #define BD_TX_ERR		(BD_UFLO | BD_LTCL | BD_RETRY_CT | BD_DROP | \
-		BD_DEFER | BD_CARLOSS)
+				 BD_DEFER | BD_CARLOSS)
 
 
 /* arcvmac private data structures */
@@ -132,7 +136,7 @@ struct dma_fifo {
 	int size;
 };
 
-struct	vmac_priv {
+struct vmac_priv {
 	struct net_device *dev;
 	struct platform_device *pdev;
 
@@ -140,7 +144,7 @@ struct	vmac_priv {
 	spinlock_t lock; /* protects structure plus hw regs of device */
 
 	/* base address of register set */
-	char *regs;
+	char __iomem *regs;
 	struct resource *mem;
 
 	/* DMA ring buffers */
@@ -181,7 +185,7 @@ struct	vmac_priv {
 	int duplex;
 
 	/* debug */
-	int shutdown;
+	bool shutdown;
 };
 
 /* DMA ring management */
@@ -198,7 +202,7 @@ static inline int fifo_used(struct dma_fifo *f);
 static inline int fifo_inc_ct(int ct, int size);
 static inline void fifo_dump(struct dma_fifo *fifo);
 
-static inline int fifo_empty(struct dma_fifo *f)
+static inline bool fifo_empty(struct dma_fifo *f)
 {
 	return f->head == f->tail;
 }
@@ -225,7 +229,7 @@ static inline int fifo_used(struct dma_fifo *f)
 	return used;
 }
 
-static inline int fifo_full(struct dma_fifo *f)
+static inline bool fifo_full(struct dma_fifo *f)
 {
 	return (fifo_used(f) + 1) == f->size;
 }
@@ -252,9 +256,9 @@ static inline void fifo_inc_tail(struct dma_fifo *fifo)
 /* internal funcs */
 static inline void fifo_dump(struct dma_fifo *fifo)
 {
-	printk(KERN_INFO "fifo: head %d, tail %d, size %d\n", fifo->head,
-			fifo->tail,
-			fifo->size);
+	pr_info("fifo: head %d, tail %d, size %d\n", fifo->head,
+		fifo->tail,
+		fifo->size);
 }
 
 static inline int fifo_inc_ct(int ct, int size)
