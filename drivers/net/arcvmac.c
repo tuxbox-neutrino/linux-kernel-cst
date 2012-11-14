@@ -205,7 +205,7 @@ static int __devinit vmac_mii_probe(struct net_device *dev)
 
 	phydev->supported &= PHY_BASIC_FEATURES;
 	phydev->supported |= SUPPORTED_Asym_Pause | SUPPORTED_Pause;
-#if 0
+
 	vmac_clk = clk_get(&ap->pdev->dev, "arcvmac");
 	if (IS_ERR(vmac_clk)) {
 		err = PTR_ERR(vmac_clk);
@@ -214,8 +214,7 @@ static int __devinit vmac_mii_probe(struct net_device *dev)
 
 	clock_rate = clk_get_rate(vmac_clk);
 	clk_put(vmac_clk);
-#endif
-	clock_rate = 25 * 1000 * 1000;
+
 	dev_dbg(&ap->pdev->dev, "vmac_clk: %lu Hz\n", clock_rate);
 
 	if (clock_rate < 25000000)
@@ -231,8 +230,8 @@ static int __devinit vmac_mii_probe(struct net_device *dev)
 
 	return 0;
 
-#if 0
 err_disconnect:
+#if 0
 	phy_disconnect(phydev);
 #endif
 err_out:
