@@ -140,7 +140,7 @@ static int cx2450x_gpio_get(struct gpio_chip *chip, unsigned offset)
 	struct cx2450x_gpio_chip *cx;
 
 	cx = container_of(chip, struct cx2450x_gpio_chip, chip);
-	return !!readl(cx->regbase + PIO_READ_OFFSET) & mask;
+	return !!(readl(cx->regbase + PIO_READ_OFFSET) & mask);
 }
 
 /*
