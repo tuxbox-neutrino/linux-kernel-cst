@@ -40,11 +40,13 @@ static struct clk clk_25M = {
 	.rate = 25 * 1000 * 1000,
 };
 
+#if 0 /* What to do with this .. */
 /*
  * Catch-all default clock to satisfy drivers using the clk API.  We don't
  * model the actual hardware clocks yet.
  */
 static struct clk clk_default;
+#endif
 
 #define CLK(_clk, dev)				\
 	{					\
@@ -58,7 +60,7 @@ static struct clk_lookup lookups[] = {
 
 int __init cx2450x_clk_init(void)
 {
-	//clkdev_add_table(lookups, ARRAY_SIZE(lookups));
+	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
 	return 0;
 }

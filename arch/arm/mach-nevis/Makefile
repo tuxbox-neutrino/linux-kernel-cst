@@ -9,7 +9,8 @@ USE_STANDARD_AS_RULE := true
 
 # Object file lists.
 
-obj-y			:= irq.o dma.o mach.o mipidle.o devices.o gpio.o time.o clock.o
+obj-y			:= irq.o dma.o mach.o mipidle.o devices.o gpio.o time.o
+obj-$(CONFIG_COMMON_CLKDEV) += clock.o
 #obj-y			:= pllc.o
 obj-$(CONFIG_PCI)	+= pci.o
 #obj-$(CONFIG_PM)	+= pm.o

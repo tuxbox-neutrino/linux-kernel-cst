@@ -378,7 +378,7 @@ config ARCH_NEVIS
 	select VMSPLIT_2G
 	select ARCH_USES_GETTIMEOFFSET
 	select ARCH_HAS_HOLES_MEMORYMODEL
-	select CLKDEV_LOOKUP
+	select COMMON_CLKDEV
 	help
 	  Support for NXP CX2450x SoC.
 
