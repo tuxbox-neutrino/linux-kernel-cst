@@ -768,7 +768,7 @@ static irqreturn_t vmac_intr(int irq, void *dev_instance)
 	if (unlikely(ap->shutdown))
 		dev_err(&ap->pdev->dev, "ISR during close\n");
 
-	if (unlikely(!status & (RXINT_MASK|MDIO_MASK|ERR_MASK)))
+	if (unlikely(!(status & (RXINT_MASK|MDIO_MASK|ERR_MASK))))
 		dev_err(&ap->pdev->dev, "Spurious IRQ\n");
 
 	if ((status & RXINT_MASK) && (vmac_readl(ap, ENABLE) & RXINT_MASK) &&
