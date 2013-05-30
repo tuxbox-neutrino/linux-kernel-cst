@@ -466,7 +466,7 @@ extern struct sys_timer cx2450x_sys_timer;	/* in arch/arm/mach-nevis/time.c */
  * The ATAG list is only temporary and will eventually get over-written
  * so we copy it in our machine fixup call.
  */
-MACHINE_START(NEVIS, "CoolStream HDx IRD")
+MACHINE_START(NEVIS, "CST HDx IRD")
 	.boot_params	=  0x00000100,
 	.map_io		=  cx2450x_map_io,
 	.init_machine	=  cx2450x_init,
