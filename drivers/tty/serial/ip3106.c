@@ -16,6 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(CONFIG_SERIAL_IP3106_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
+#define SUPPORT_SYSRQ
+#endif
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -23,6 +26,7 @@
 #include <linux/console.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
+#include <linux/delay.h>
 
 #include <linux/types.h>
 
@@ -58,34 +62,45 @@
 #define BASE_BAUD		(115200)
 #endif
 
+#ifdef CONFIG_ARCH_APOLLO
 #define UART_NR			4
+#else
+#define UART_NR			3
+#endif
+
+#define BOTH_EMPTY		(IP3106_UART_LSR_THRE_MSK | IP3106_UART_LSR_TEMT_MSK)
+
+#define LSR_SAVE_FLAGS		(IP3106_UART_LSR_OE_MSK | \
+				IP3106_UART_LSR_PE_MSK | \
+				IP3106_UART_LSR_FE_MSK | \
+				IP3106_UART_LSR_BI_MSK)
 
 /*---------------------------------------------------------------------------
  * Access macros for the UART IP_3106
  *---------------------------------------------------------------------------*/
-#define UART_GET_LSR(p)		__raw_readl((p)->membase + IP3106_UART_LSR_REG)
-#define UART_GET_MCR(p) 	__raw_readl((p)->membase + IP3106_UART_MCR_REG)
-#define UART_SET_MCR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_MCR_REG)
-#define UART_GET_MSR(p)		__raw_readl((p)->membase + IP3106_UART_MSR_REG)
-#define UART_SET_IER(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_IER_REG)
-#define UART_GET_IER(p)		__raw_readl((p)->membase + IP3106_UART_IER_REG)
-#define UART_GET_LCR(p)		__raw_readl((p)->membase + IP3106_UART_LCR_REG)
-#define UART_SET_LCR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_LCR_REG)
-#define UART_GET_CFG(p)		__raw_readl((p)->membase + IP3106_UART_CFG_REG)
-#define UART_SET_DLL(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_DLL_REG)
-#define UART_SET_DLM(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_DLM_REG)
-#define UART_GET_DLL(p)		__raw_readl((p)->membase + IP3106_UART_DLL_REG)
-#define UART_GET_DLM(p)		__raw_readl((p)->membase + IP3106_UART_DLM_REG)
-#define UART_SET_FCR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_FCR_REG)
-#define UART_GET_RBR(p)		__raw_readl((p)->membase + IP3106_UART_RBR_REG)
-#define UART_PUT_THR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_THR_REG)
-#define UART_GET_IIR(p)		__raw_readl((p)->membase + IP3106_UART_IIR_REG)
-#define UART_GET_MOD(p)		__raw_readl((p)->membase + IP3106_UART_MID_REG)
-#define UART_GET_CFG(p)		__raw_readl((p)->membase + IP3106_UART_CFG_REG)
-#define UART_GET_OSR(p)		__raw_readl((p)->membase + IP3106_UART_OSR_REG)
-#define UART_SET_OSR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_OSR_REG)
-#define UART_SET_MODE(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_MODE_REG)
-#define UART_SET_FDR(p,c)	__raw_writel((c),(p)->membase + IP3106_UART_FDR_REG)
+#define UART_GET_LSR(p)		readl_relaxed((p)->membase + IP3106_UART_LSR_REG)
+#define UART_GET_MCR(p) 	readl_relaxed((p)->membase + IP3106_UART_MCR_REG)
+#define UART_SET_MCR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_MCR_REG)
+#define UART_GET_MSR(p)		readl_relaxed((p)->membase + IP3106_UART_MSR_REG)
+#define UART_SET_IER(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_IER_REG)
+#define UART_GET_IER(p)		readl_relaxed((p)->membase + IP3106_UART_IER_REG)
+#define UART_GET_LCR(p)		readl_relaxed((p)->membase + IP3106_UART_LCR_REG)
+#define UART_SET_LCR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_LCR_REG)
+#define UART_GET_CFG(p)		readl_relaxed((p)->membase + IP3106_UART_CFG_REG)
+#define UART_SET_DLL(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_DLL_REG)
+#define UART_SET_DLM(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_DLM_REG)
+#define UART_GET_DLL(p)		readl_relaxed((p)->membase + IP3106_UART_DLL_REG)
+#define UART_GET_DLM(p)		readl_relaxed((p)->membase + IP3106_UART_DLM_REG)
+#define UART_SET_FCR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_FCR_REG)
+#define UART_GET_RBR(p)		readl_relaxed((p)->membase + IP3106_UART_RBR_REG)
+#define UART_PUT_THR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_THR_REG)
+#define UART_GET_IIR(p)		readl_relaxed((p)->membase + IP3106_UART_IIR_REG)
+#define UART_GET_MOD(p)		readl_relaxed((p)->membase + IP3106_UART_MID_REG)
+#define UART_GET_CFG(p)		readl_relaxed((p)->membase + IP3106_UART_CFG_REG)
+#define UART_GET_OSR(p)		readl_relaxed((p)->membase + IP3106_UART_OSR_REG)
+#define UART_SET_OSR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_OSR_REG)
+#define UART_SET_MODE(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_MODE_REG)
+#define UART_SET_FDR(p,c)	writel_relaxed((c),(p)->membase + IP3106_UART_FDR_REG)
 
 /*--------------------------------------------------------------------------*
  * UART IP_3106 port structure                                              *
@@ -96,6 +111,7 @@ struct ip3106_port
 	unsigned int      				old_status;
 	int               				flowctrl;
 	int               				autortscts;
+	u32						lsr_saved_flags;
 #ifdef CONFIG_UART_NX_DMAC_1902
 	int  dma_enabled;
   	struct dma_chan					*chan_tx;
@@ -200,15 +216,13 @@ static int ip3106_line = 0;
 
 static unsigned int ip3106_tx_empty (struct uart_port *port)
 {
-	unsigned int status = 0;
+	struct ip3106_port *up = (struct ip3106_port *)port;
+	u32 lsr = 0;
 
-	/* Get the UART status */
-	if (UART_GET_LSR(port) & IP3106_UART_LSR_TEMT_MSK)
-		status = TIOCSER_TEMT;
-	else
-		status = 0;
+	lsr = UART_GET_LSR(port);
+	up->lsr_saved_flags |= (lsr & LSR_SAVE_FLAGS);
 
-	return (status);
+	return ((lsr & BOTH_EMPTY) == BOTH_EMPTY) ? TIOCSER_TEMT : 0;
 }
 
 static void ip3106_set_modem_ctrl(struct uart_port *port, unsigned int mctrl)
@@ -365,7 +379,7 @@ void ip3106_rx_dma_release(struct ip3106_port *s, bool enable_pio)
 	s->cookie_rx[0] = s->cookie_rx[1] = -EINVAL;
 	dma_sync_wait(chan,0);
    	chan->device->device_terminate_all(chan);
-   dma_free_coherent(port->dev, s->buf_len_rx * 2, sg->page_link + sg->offset, sg->dma_address);
+	dma_free_coherent(port->dev, s->buf_len_rx * 2, sg->page_link + sg->offset, sg->dma_address);
 	if (enable_pio)
 		ip3106_start_rx(port);
 }
@@ -539,7 +553,22 @@ void work_fn_tx(struct work_struct *work)
 }
 #endif
 
+static void wait_for_xmitr(struct uart_port *port, int bits)
+{
+	struct ip3106_port *up = (struct ip3106_port *)port;
+	unsigned int status, tmout = 10000;
 
+	/* Wait up to 10ms for the character(s) to be sent. */
+	do {
+		status = UART_GET_LSR(port);
+
+		up->lsr_saved_flags |= status & LSR_SAVE_FLAGS;
+
+		if (--tmout == 0)
+			break;
+		udelay(1);
+	} while ((status & bits) != bits);
+}
 
 static void ip3106_stop_tx(struct uart_port *port)
 {
@@ -572,14 +601,14 @@ static void ip3106_start_tx(struct uart_port *port)
 	lcr &= ~IP3106_UART_LCR_DLAB_MSK;
 	UART_SET_LCR(port, lcr);
 
-    if (s->dma_enabled)
-    {
+	if (s->dma_enabled)
+	{
 		if (s->chan_tx) 
-	    {
+		{
 			if (!uart_circ_empty(&s->port.state->xmit) && s->cookie_tx < 0)
 				schedule_work(&s->work_tx);
-	    }
-	   	return;
+		}
+		return;
 	}
 #endif
 	/* To access Interrupt Enable Register, DLab bit in LCR must be ZERO */
@@ -598,18 +627,15 @@ static void ip3106_start_tx(struct uart_port *port)
 		port->icount.tx++;
 	}
 
-	/* Wait till the Tx FIFO is empty */
-	do {
-		status = UART_GET_LSR(port);
-	} while (!(status & IP3106_UART_LSR_THRE_MSK));
-
-	/* Write the character */
-	UART_PUT_THR(port,ch);
+	wait_for_xmitr(port, BOTH_EMPTY);
 
 	/* Enable the Tx channel interrupt */
 	ier = UART_GET_IER(port);
 	ier |= IP3106_UART_IER_THREI_E_MSK;
 	UART_SET_IER(port, ier);
+
+	/* Write the character */
+	UART_PUT_THR(port,ch);
 }
 
 static void ip3106_stop_rx(struct uart_port *port)
@@ -672,7 +698,8 @@ static void ip3106_break_ctrl(struct uart_port *port, int break_state)
 
 static void ip3106_rx_chars(struct uart_port *port)
 {
-	unsigned int      lcr = 0, status = 0, ch = 0, rsr = 0;
+	struct ip3106_port *up = (struct ip3106_port *)port;
+	unsigned int      lcr = 0, ch = 0, rsr = 0;
 	unsigned int      max_count = 256;
 	unsigned int	  flag = 0;
 
@@ -682,7 +709,8 @@ static void ip3106_rx_chars(struct uart_port *port)
 	UART_SET_LCR(port, lcr);
 
 	/* Read the status of the Rx FIFO */
-	status = UART_GET_LSR(port);
+	rsr = UART_GET_LSR(port);
+
 	/* Read till the FIFO is empty or max_count is 0 */
         /*
          * Note: For some reason that isn't clear, we sometimes get an
@@ -692,15 +720,20 @@ static void ip3106_rx_chars(struct uart_port *port)
          * it always reads a char, even if the FIFO is empty.
          */
 	do {
+
 		/* Read the character from Rx FIFO */
 		ch = UART_GET_RBR(port);
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
+		rsr |= up->lsr_saved_flags;
+		up->lsr_saved_flags = 0;
+
 		/* Note that the error handling code is
 		 *  out of the main execution path
 		 */
-		rsr = (UART_GET_LSR(port) | UART_DUMMY_RSR_RX);
+		rsr = (rsr | UART_DUMMY_RSR_RX);
+
 		if (rsr & IP3106_UART_LSR_REG_MSK) {
 			if (rsr & IP3106_UART_LSR_BI_MSK) {
 				rsr &= ~(IP3106_UART_LSR_FE_MSK |
@@ -733,13 +766,27 @@ static void ip3106_rx_chars(struct uart_port *port)
 
 		uart_insert_char(port, rsr, IP3106_UART_LSR_OE_MSK, ch, flag);
 
-		if ((rsr & port->ignore_status_mask) == 0)
+		if ((rsr & port->ignore_status_mask) == 0) {
+			/* CST Mod */
+			spin_unlock(&port->lock);
+
 			tty_flip_buffer_push(&port->state->port);
+			/* CST Mod */
+			spin_lock(&port->lock);
+		}
 
 ignore_char:
-		status = UART_GET_LSR(port);
-	} while ( ((status & IP3106_UART_LSR_DR_MSK) != 0) && max_count--);
+		rsr = UART_GET_LSR(port);
+	} while ( ((rsr & IP3106_UART_LSR_DR_MSK) != 0) && max_count--);
+
+
+	/* CST Mod */
+	spin_unlock(&port->lock);
+
 	tty_flip_buffer_push(&port->state->port);
+
+	/* CST Mod */
+	spin_lock(&port->lock);
 	
 	if (modem_notify) 
 	{
@@ -1026,6 +1073,7 @@ static irqreturn_t ip3106_int(int irq, void *dev_id)
 	unsigned int     status = 0;
 	unsigned int	 mcr = 0;
 	int              handled = 0;
+	u32		 ier = 0;
 #ifdef CONFIG_UART_NX_DMAC_1902
 	int rsr = 0;
 	unsigned long tout;
@@ -1115,49 +1163,53 @@ ignore_char:
 #endif
   	{
 		spin_lock(&uap->port.lock);
+
 		status = UART_GET_IIR(port);
+		ier    = UART_GET_IER(port);
+
 		if (!(status & IP3106_UART_IIR_PENDING_MSK)) {
 			irq_status = (status & IP3106_UART_IIR_INT_MASK) >> 1;
 
-			if ((irq_status  == IP3106_UART_IIR_RLS_INT_ID) &&
-				(UART_GET_IER(port) & IP3106_UART_IER_RLSI_E_MSK)) {
-				UART_GET_LSR(port);
-			}
-			if (((irq_status == IP3106_UART_IIR_CTI_INT_ID) ||
-				(irq_status == IP3106_UART_IIR_RDA_INT_ID)) &&
-				(UART_GET_IER(port) & IP3106_UART_IER_RDAI_E_MSK)) {
-				if (uap->flowctrl == CRTSCTS) {
-					if (uap->autortscts == 0) {
-						/* Deassert the RTS */
-						mcr = UART_GET_MCR(port);
-						mcr &= ~IP3106_UART_MCR_RTS_MSK;
-						UART_SET_MCR(port,mcr);
-					}
-				}
-				if(uap->flowctrl == (IXON|IXOFF)) {
-					UART_PUT_THR(port,0x13);
-				}
-				ip3106_rx_chars(port);
+			if (ier & (IP3106_UART_IER_RLSI_E_MSK |
+				   IP3106_UART_IER_RDAI_E_MSK)) {
 
-				if(uap->flowctrl == CRTSCTS) {
-					if(uap->autortscts == 0) {
-						/* Assert the RTS */
-						mcr = UART_GET_MCR(port);
-						mcr |= IP3106_UART_MCR_RTS_MSK;
-						UART_SET_MCR(port,mcr);
+				if ((irq_status == IP3106_UART_IIR_RLS_INT_ID) ||
+				    (irq_status == IP3106_UART_IIR_CTI_INT_ID) ||
+				    (irq_status == IP3106_UART_IIR_RDA_INT_ID)) {
+
+					if (uap->flowctrl == CRTSCTS) {
+						if (uap->autortscts == 0) {
+							/* Deassert the RTS */
+							mcr = UART_GET_MCR(port);
+							mcr &= ~IP3106_UART_MCR_RTS_MSK;
+							UART_SET_MCR(port,mcr);
+						}
 					}
-				}
-				if(uap->flowctrl == (IXON|IXOFF)) {
-					UART_PUT_THR(port,0x11);
+					if(uap->flowctrl == (IXON|IXOFF)) {
+						UART_PUT_THR(port,0x13);
+					}
+					ip3106_rx_chars(port);
+
+					if(uap->flowctrl == CRTSCTS) {
+						if(uap->autortscts == 0) {
+							/* Assert the RTS */
+							mcr = UART_GET_MCR(port);
+							mcr |= IP3106_UART_MCR_RTS_MSK;
+							UART_SET_MCR(port,mcr);
+						}
+					}
+					if(uap->flowctrl == (IXON|IXOFF)) {
+						UART_PUT_THR(port,0x11);
+					}
 				}
 			}
 			if ((irq_status == IP3106_UART_IIR_THRE_INT_ID) &&
-				(UART_GET_IER(port) & IP3106_UART_IER_THREI_E_MSK)) {
+					(ier & IP3106_UART_IER_THREI_E_MSK)) {
 				ip3106_tx_chars(port);
 			}
 #ifdef CONFIG_IP3106_UART0        
 			if ((irq_status == IP3106_UART_IIR_MSI_INT_ID) &&
-				(UART_GET_IER(port) & IP3106_UART_IER_MSI_E_MSK )) {
+					(ier & IP3106_UART_IER_MSI_E_MSK )) {
 				ip3106_modem_status(port);
 			}
 #endif        
@@ -1800,13 +1852,18 @@ static void ip3106_put_poll_char(struct uart_port *port,
 {
 	unsigned int status = 0;
 
+        u32 ier;
+
+        ier = UART_GET_IER(port);
+        UART_SET_IER(port, 0);
+
 	/* Wait till the Tx FIFO is empty */
-	do {
-		status = UART_GET_LSR(port);
-	} while (!(status & IP3106_UART_LSR_THRE_MSK));
+	wait_for_xmitr(port, BOTH_EMPTY);
 
 	/* Write the character */
 	UART_PUT_THR(port,(ch | 0x80));
+
+	UART_SET_IER(port, ier);
 	return;
 
 }
@@ -1858,6 +1915,7 @@ static struct ip3106_port ip3106_ports0 =
 		.ops            = &ip3106_pops,
 		.flags          = UPF_BOOT_AUTOCONF,
 		.line           = 0,
+		.lock		= __SPIN_LOCK_UNLOCKED(ip3106_ports0.lock),
 	},
 	.autortscts = 0,
 	.flowctrl   = CRTSCTS, /* Flow control should be enabled for modem port */
@@ -1877,6 +1935,7 @@ static struct ip3106_port ip3106_ports1 =
 		.ops            = &ip3106_pops,
 		.flags          = UPF_BOOT_AUTOCONF,
 		.line           = 1,
+		.lock		= __SPIN_LOCK_UNLOCKED(ip3106_ports1.lock),
 	},
 	.autortscts = 0,
 	.flowctrl   = 0, /* Flow control is not supported on our target */
@@ -1895,6 +1954,7 @@ static struct ip3106_port ip3106_ports2 =
 		.ops            = &ip3106_pops,
 		.flags          = UPF_BOOT_AUTOCONF,
 		.line           = 2,
+		.lock		= __SPIN_LOCK_UNLOCKED(ip3106_ports2.lock),
 	},
 	.autortscts = 0,
 	.flowctrl   = 0, /* Flow control is not supported on our target */
@@ -1914,14 +1974,15 @@ static struct ip3106_port ip3106_ports3 =
 		.ops            = &ip3106_pops,
 		.flags          = UPF_BOOT_AUTOCONF,
 		.line           = 3,
+		.lock		= __SPIN_LOCK_UNLOCKED(ip3106_ports3.lock),
 	},
 	.autortscts = 0,
 	.flowctrl   = 0, /* Flow control is not supported on our target */
 };
 #endif
 
-static void ip3106_console_write(struct console *co,
-	const char *s, unsigned int count)
+static void ip3106_console_write(struct console *co, const char *s,
+				 unsigned int count)
 {
 	unsigned int 	status = 0;
 	struct ip3106_port *uap = NULL;
@@ -1931,9 +1992,7 @@ static void ip3106_console_write(struct console *co,
 #ifdef CONFIG_IP3106_UART0
 	if(co->index == 0)
 		uap = &ip3106_ports0;
-	else
-#endif        
-    if(co->index == 1)
+	else if(co->index == 1)
 		uap = &ip3106_ports1;
 	else if(co->index == 2)
 		uap = &ip3106_ports2;
@@ -1941,35 +2000,42 @@ static void ip3106_console_write(struct console *co,
 	else 
 		uap = &ip3106_ports3;
 #endif
-
+#else
+	if(co->index == 0)
+		uap = &ip3106_ports1;
+	else if(co->index == 1)
+		uap = &ip3106_ports2;
+#ifdef CONFIG_ARCH_APOLLO
+	else
+		uap = &ip3106_ports3;
+#endif
+#endif
 	spin_lock_irqsave(&uap->port.lock, flags);
-
 	/* Now write the each character */
 	for (i = 0; i < count; i++) {
 		/* Wait till the Tx FIFO is ready */
 		do {
-			status = __raw_readl(uap->port.membase +
+			status = readl_relaxed(uap->port.membase +
 					IP3106_UART_LSR_REG);
 		} while (!(status & IP3106_UART_LSR_THRE_MSK));
 
-		__raw_writel(s[i],uap->port.membase + IP3106_UART_THR_REG);
+		writel_relaxed(s[i],uap->port.membase + IP3106_UART_THR_REG);
 		if (s[i] == '\n') {
 			do {
-				status = __raw_readl(uap->port.membase +
+				status = readl_relaxed(uap->port.membase +
 						IP3106_UART_LSR_REG);
 			} while (!(status & IP3106_UART_LSR_THRE_MSK));
-			__raw_writel('\r',uap->port.membase +
+			writel_relaxed('\r',uap->port.membase +
 					IP3106_UART_THR_REG);
 		}
 	}
 	/* Wait for transmitter to become empty
 	 *	and restore the IER */
 	do {
-		status = __raw_readl(uap->port.membase + IP3106_UART_LSR_REG);
+		status = readl_relaxed(uap->port.membase + IP3106_UART_LSR_REG);
 	} while (!(status & IP3106_UART_LSR_THRE_MSK));
 
 	spin_unlock_irqrestore(&uap->port.lock, flags);
-
 }
 
 static void __init ip3106_console_get_options(struct uart_port *port,
@@ -2038,15 +2104,24 @@ static int __init ip3106_console_setup(struct console *co, char *options)
 #ifdef CONFIG_IP3106_UART0
 	if(co->index == 0)
 		uap = &ip3106_ports0;
-	else
-#endif
-    if(co->index == 1)
+	else if(co->index == 1)
 		uap = &ip3106_ports1;
 	else if(co->index == 2)
 		uap = &ip3106_ports2;
 #ifdef CONFIG_ARCH_APOLLO
 	else 
 		uap = &ip3106_ports3;
+#endif
+#else
+	if(co->index == 0)
+		uap = &ip3106_ports1;
+	else if(co->index == 1)
+		uap = &ip3106_ports2;
+#ifdef CONFIG_ARCH_APOLLO
+	else
+		uap = &ip3106_ports3;
+#endif
+	uap->port.line = co->index;
 #endif
 	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
@@ -2094,11 +2169,11 @@ late_initcall(ip3106_late_console_init);
  *--------------------------------------------------------------------------*/
 static struct uart_driver ip3106_uart = {
 	.owner			= THIS_MODULE,
-	.driver_name	= "ttyS",
+	.driver_name		= "ttyS",
 	.dev_name		= "ttyS",
 	.major			= 4,	/* Major device number */
 	.minor			= 64,	/* Minor device number */
-	.nr				= UART_NR,
+	.nr			= UART_NR,
 #if defined(CONFIG_SERIAL_IP3106_CONSOLE)
 	.cons			= &ip3106_console,
 #else
@@ -2114,20 +2189,17 @@ static int ip3106_probe(struct platform_device *dev)
 	struct ip3106_port *uap = NULL;
 	struct resource *res;
 	void __iomem *base;
-
-
 	int ret = -ENODEV;
 
 	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
 	if (!res)
 		return -ENODEV;
 
-	uap = kmalloc(sizeof(struct ip3106_port), GFP_KERNEL);
+	uap = kzalloc(sizeof(struct ip3106_port), GFP_KERNEL);
 	if (uap == NULL) {
 		ret = -ENOMEM;
 		goto out;
 	}
-	memset(uap, 0, sizeof(struct ip3106_port));
 
 	base = ioremap(res->start, res->end - res->start + 1);
 	if (!base) {
@@ -2144,7 +2216,12 @@ static int ip3106_probe(struct platform_device *dev)
 	uap->port.uartclk = UART_CLOCK_RATE;
 	uap->port.fifosize= 64;
 	uap->port.flags = UPF_BOOT_AUTOCONF;
+#ifdef CONFIG_IP3106_UART0
 	uap->port.line  = ip3106_line;
+#else
+	uap->port.line  = ip3106_line - 1;
+#endif
+
 	uap->autortscts = 0;
 	uap->flowctrl   = 0;
 #ifdef CONFIG_UART_NX_DMAC_1902
