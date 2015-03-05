@@ -103,6 +103,8 @@ struct mtd_write_req {
 #define MTD_BIT_WRITEABLE	0x800	/* Single bits can be flipped */
 #define MTD_NO_ERASE		0x1000	/* No erase necessary */
 #define MTD_POWERUP_LOCK	0x2000	/* Always locked after reset */
+#define MTD_SKIP_BB_FOR_SQUASHFS	0x4000	/* skip bad blocks */
+#define MTD_USE_DEV_OOB_LAYOUT    	0x10000 /* Use Device OOB Layout */
 
 /* Some common devices / combinations of capabilities */
 #define MTD_CAP_ROM		0
@@ -220,7 +222,7 @@ struct nand_oobfree {
 };
 
 #define MTD_MAX_OOBFREE_ENTRIES	8
-#define MTD_MAX_ECCPOS_ENTRIES	64
+#define MTD_MAX_ECCPOS_ENTRIES	96
 /*
  * OBSOLETE: ECC layout control structure. Exported to user-space via ioctl
  * ECCGETLAYOUT for backwards compatbility and should not be mistaken as a
