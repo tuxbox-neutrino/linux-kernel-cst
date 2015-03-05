@@ -2834,6 +2834,12 @@ int sdhci_add_host(struct sdhci_host *host)
 			>> SDHCI_CLOCK_BASE_SHIFT;
 
 	host->max_clk *= 1000000;
+#ifdef CONFIG_PLAT_STB
+	/* IP 3413 supports different clock speed but the max clock  from
+   	 * CGU is 50MHz, so fixing it to 50MHz
+	 */
+        host->max_clk = 50000000;
+#endif
 	if (host->max_clk == 0 || host->quirks &
 			SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN) {
 		if (!host->ops->get_max_clock) {

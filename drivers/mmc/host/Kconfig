@@ -201,6 +201,16 @@ config MMC_SDHCI_SIRF
 
 	  If unsure, say N.
 
+config MMC_SDHCI_STB
+	tristate "SDHCI/MMC controller support on STB Platform"
+	depends on PLAT_STB
+	select MMC_SDHCI
+	help
+	  This selects the SDHCI/MMC IP_3413 support for STB platform.
+	  If you have a controller with this interface, say Y or M here.
+	  If unsure, say N.
+	  Note: This will disable the option to configure a NOR flash device.
+
 config MMC_SDHCI_PXAV3
 	tristate "Marvell MMP2 SD Host Controller support (PXAV3)"
 	depends on CLKDEV_LOOKUP

@@ -805,8 +805,30 @@ int mmc_sd_setup_card(struct mmc_host *host, struct mmc_card *card,
 	bool reinit)
 {
 	int err;
+	int status;
 
-	if (!reinit) {
+	/*
+	 * Test if card is locked
+	 */
+	err = mmc_send_status(card, &status);
+	if (err)
+		return err;
+
+	if (status & R1_CARD_IS_LOCKED)
+		mmc_card_set_locked(card);
+	else {
+		/* If card used to be locked, this is _not_ an reinit! */
+		if (mmc_card_locked(card))
+			reinit = false;
+
+		mmc_card_clr_locked(card);
+	}
+
+	/*
+	 * If card is locked or already initialized, do not try to
+	 * set it up further.
+	 */
+	if (!reinit && !mmc_card_locked(card)) {
 		/*
 		 * Fetch SCR from card.
 		 */
