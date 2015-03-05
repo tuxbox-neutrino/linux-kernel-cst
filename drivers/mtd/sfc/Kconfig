@@ -1,0 +1,33 @@
+#SFC driver for STB Platforms
+
+menuconfig MTD_NX_SFC
+	tristate "SFC Device Support"
+	depends on MTD !=n
+  select MTD_PARTITIONS
+	help
+	  This enables support for accessing SFC flash
+	  devices on STB platforms.
+
+config MTD_NX_SFC_PREFETCH_EN
+	bool "PREFETCH Buffer support"
+	depends on MTD_NX_SFC
+	help
+	  This is enables the prefetch buffer in the SFC controller.
+		The controller supports 64 prefetch words.
+
+config MTD_NX_SFC_DMAC_EN
+	bool "DMA support"
+	depends on MTD_NX_SFC
+	help
+	  This is enables the A9 to access SFC through the AHB Master Interface.
+		 SFC DMA driver is used to xfer the data to/from the SFC apperture in the GCS.
+
+config MTD_NX_SFC_QUAD_MODE
+        bool "QUAD Mode support"
+	depends on MTD_NX_SFC
+        help
+          This is enables the Quad Mode in the SFC controller.
+
+
+
+
