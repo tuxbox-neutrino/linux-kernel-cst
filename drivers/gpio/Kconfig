@@ -224,6 +224,16 @@ config GPIO_STA2X11
 	  Say yes here to support the STA2x11/ConneXt GPIO device.
 	  The GPIO module has 128 GPIO pins with alternate functions.
 
+config GPIO_STB
+        tristate "STB Platform GPIO support"
+        depends on PLAT_STB
+        help
+          Say Y here if you want to enable GPIO support for STB Soc's. 
+	  Some of the GPIOs may be used as interrupts and in that case you must 
+          say 'Y' here or else the board might not boot at all. 
+          Say 'M' here if you want to compile it as module.
+          Never say M or N unless you are very sure about what you are doing.
+
 config GPIO_TS5500
 	tristate "TS-5500 DIO blocks and compatibles"
 	help
