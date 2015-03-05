@@ -46,7 +46,64 @@ extern void __aeabi_uidiv(void);
 extern void __aeabi_uidivmod(void);
 extern void __aeabi_ulcmp(void);
 
+extern void __aeabi_uldivmod(void);
+extern void __aeabi_ldivmod(void);
+
 extern void fpundefinstr(void);
+
+#define LONG_LONG_MAX	__LONG_LONG_MAX__
+#define LONG_LONG_MIN	(-LONG_LONG_MAX - 1LL)
+#define INT64_MIN	(-0x7fffffffffffffffLL-1)
+
+uint64_t llrint( double x )
+{
+	union {
+		double d;
+		uint64_t u;
+	} u = {x};
+
+	uint64_t absx = u.u & 0x7fffffffffffffffULL;
+
+	// handle x is zero, large, or NaN simply convert to long long and return
+	if( absx >= 0x4330000000000000ULL )
+	{
+		uint64_t result = (uint64_t) x; //set invalid if necessary
+		//Deal with overflow cases
+		if( x < (double) LONG_LONG_MIN )
+			return LONG_LONG_MIN;
+
+		// Note: float representation of LONG_LONG_MAX likely inexact,
+		//                which is why we do >= here
+		if( x >= -((double) LONG_LONG_MIN) )
+		return __LONG_LONG_MAX__;
+		return result;
+	}
+
+	// copysign( 0x1.0p52, x )
+	u.u = (u.u & 0x8000000000000000ULL) | 0x4330000000000000ULL;
+
+	//round according to current rounding mode
+	x += u.d;
+	x -= u.d;
+
+	return (uint64_t) x;
+}
+
+uint64_t  __aeabi_d2ulz  (double a )
+{
+	int64_t v;
+
+	v = llrint(a + (double)INT64_MIN);
+	return (v - INT64_MIN);
+}
+
+double __aeabi_ul2d ( uint64_t v )
+{
+	return (double)v;
+}
+
+EXPORT_SYMBOL(__aeabi_ul2d);
+EXPORT_SYMBOL(__aeabi_d2ulz);
 
 	/* platform dependent support */
 EXPORT_SYMBOL(arm_delay_ops);
@@ -125,6 +182,8 @@ EXPORT_SYMBOL(__aeabi_lmul);
 EXPORT_SYMBOL(__aeabi_uidiv);
 EXPORT_SYMBOL(__aeabi_uidivmod);
 EXPORT_SYMBOL(__aeabi_ulcmp);
+EXPORT_SYMBOL(__aeabi_uldivmod);
+EXPORT_SYMBOL(__aeabi_ldivmod);
 #endif
 
 	/* bitops */
