@@ -23,6 +23,10 @@
 #include <asm/machdep.h>
 #endif /* CONFIG_PPC */
 
+#ifdef CONFIG_ARM
+#include <asm/system_info.h>
+#endif /* CONFIG_ARM */
+
 #include <asm/page.h>
 
 char *of_fdt_get_string(struct boot_param_header *blob, u32 offset)
@@ -832,6 +836,7 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 {
 	unsigned long l;
 	char *p;
+	__be32 *prop;
 
 	pr_debug("search \"chosen\", depth: %d, uname: %s\n", depth, uname);
 
@@ -844,7 +849,17 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 #ifdef CONFIG_STB_MEM_RESRV
 	early_init_dt_stb_resrv(node);
 #endif
-
+#ifdef CONFIG_ARM
+	prop = of_get_flat_dt_prop(node, "serial-high", &l);
+	if (prop)
+		system_serial_high = of_read_ulong(prop, l/4);
+	prop = of_get_flat_dt_prop(node, "serial-low", &l);
+	if (prop)
+		system_serial_low = of_read_ulong(prop, l/4);
+	prop = of_get_flat_dt_prop(node, "revision", &l);
+	if (prop)
+		system_rev = of_read_ulong(prop, l/4);
+#endif
 	/* Retrieve command line */
 	p = of_get_flat_dt_prop(node, "bootargs", &l);
 	if (p != NULL && l > 0)

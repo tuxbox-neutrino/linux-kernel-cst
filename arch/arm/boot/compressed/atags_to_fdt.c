@@ -1,4 +1,6 @@
 #include <asm/setup.h>
+#include <linux/string.h>
+//#include <asm/system_info.h>
 #include <libfdt.h>
 
 #if defined(CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_EXTEND)
@@ -16,7 +18,7 @@ static int node_offset(void *fdt, const char *node_path)
 }
 
 static int setprop(void *fdt, const char *node_path, const char *property,
-		   uint32_t *val_array, int size)
+		   void *val_array, int size)
 {
 	int offset = node_offset(fdt, node_path);
 	if (offset < 0)
@@ -95,6 +97,23 @@ static void merge_fdt_bootargs(void *fdt, const char *fdt_cmdline)
 	setprop_string(fdt, "/chosen", "bootargs", cmdline);
 }
 
+void fdt_mac_address(void *fdt, u8 *mac_address, int adapter)
+{
+	char enet[16] = "ethernet0";
+	const char *path;
+
+	if (mac_address != NULL) {
+		enet[8] = 0x30 + adapter; /* FIXME ? */
+		path = getprop(fdt, "/aliases", enet, NULL);
+		if (!path) {
+			// pr_debug("No alias for %s\n", enet);
+			return;
+		}
+
+		setprop(fdt, path, "mac-address", mac_address, 6);
+	}
+}
+
 /*
  * Convert and fold provided ATAGs into the provided FDT.
  *
@@ -110,7 +129,7 @@ int atags_to_fdt(void *atag_list, void *fdt, int total_space)
 	 * address and size for each bank */
 	uint32_t mem_reg_property[2 * 2 * NR_BANKS];
 	int memcount = 0;
-	int ret, memsize;
+	int ret, memsize, enet_adap = 0;
 
 	/* make sure we've got an aligned pointer */
 	if ((u32)atag_list & 0x3)
@@ -177,6 +196,21 @@ int atags_to_fdt(void *atag_list, void *fdt, int total_space)
 					initrd_start);
 			setprop_cell(fdt, "/chosen", "linux,initrd-end",
 					initrd_start + initrd_size);
+		} else if (atag->hdr.tag == ATAG_SERIAL) {
+			uint32_t serial_high, serial_low;
+			serial_high = atag->u.serialnr.high;
+			serial_low = atag->u.serialnr.low;
+			setprop_cell(fdt, "/chosen", "serial-high",
+					serial_high);
+			setprop_cell(fdt, "/chosen", "serial-low",
+					serial_low);
+		} else if (atag->hdr.tag == ATAG_REVISION) {
+			uint32_t revision;
+			revision = atag->u.revision.rev;
+			setprop_cell(fdt, "/chosen", "revision",
+					revision);
+		} else if (atag->hdr.tag == ATAG_MAC) {
+			fdt_mac_address(fdt, atag->u.mac.mac_addr, enet_adap++);
 		}
 	}
 
