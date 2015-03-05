@@ -570,12 +570,56 @@ cmd_err:
 	return err;
 }
 
+static int mmc_blk_ioctl_rescan(struct block_device *bdev)
+{
+	struct mmc_blk_data *md;
+	struct mmc_card *card;
+	int err = 0;
+
+	/*
+	 * The caller must have CAP_SYS_RAWIO, and must be calling this on the
+	 * whole block device, not on a partition.  This prevents overspray
+	 * between sibling partitions.
+	 */
+	if ((!capable(CAP_SYS_RAWIO)) || (bdev != bdev->bd_contains))
+		return -EPERM;
+
+	md = mmc_blk_get(bdev->bd_disk);
+	if (!md) {
+		err = -EINVAL;
+		goto cmd_err;
+	}
+
+	card = md->queue.card;
+	if (IS_ERR(card)) {
+		err = PTR_ERR(card);
+		goto cmd_done;
+	}
+
+	mmc_power_restore_host(card->host);
+
+	/* Enable scanning of partition tables after unlocking */
+	if (!mmc_card_locked(card))
+		md->disk->flags &= ~GENHD_FL_NO_PART_SCAN;
+	else
+		md->disk->flags |= GENHD_FL_NO_PART_SCAN;
+
+	ioctl_by_bdev(bdev, BLKRRPART, 0);
+cmd_done:
+	mmc_blk_put(md);
+cmd_err:
+	return err;
+}
+
 static int mmc_blk_ioctl(struct block_device *bdev, fmode_t mode,
 	unsigned int cmd, unsigned long arg)
 {
 	int ret = -EINVAL;
 	if (cmd == MMC_IOC_CMD)
 		ret = mmc_blk_ioctl_cmd(bdev, (struct mmc_ioc_cmd __user *)arg);
+	else if (cmd == MMC_IOC_RESCAN)
+		ret = mmc_blk_ioctl_rescan(bdev);
+
 	return ret;
 }
 
@@ -791,8 +835,10 @@ static int mmc_blk_cmd_recovery(struct mmc_card *card, struct request *req,
 			break;
 
 		prev_cmd_status_valid = false;
-		pr_err("%s: error %d sending status command, %sing\n",
-		       req->rq_disk->disk_name, err, retry ? "retry" : "abort");
+		if ( !mmc_card_locked(card)) {
+			pr_err("%s: error %d sending status command, %sing\n",
+					req->rq_disk->disk_name, err, retry ? "retry" : "abort");
+		}
 	}
 
 	/* We couldn't get a response from the card.  Give up. */
@@ -1197,12 +1243,13 @@ static int mmc_blk_err_check(struct mmc_card *card,
 	}
 
 	if (brq->data.error) {
-		pr_err("%s: error %d transferring data, sector %u, nr %u, cmd response %#x, card status %#x\n",
-		       req->rq_disk->disk_name, brq->data.error,
-		       (unsigned)blk_rq_pos(req),
-		       (unsigned)blk_rq_sectors(req),
-		       brq->cmd.resp[0], brq->stop.resp[0]);
-
+		if ( !mmc_card_locked(card)) {
+			pr_err("%s: error %d transferring data, sector %u, nr %u, cmd response %#x, card status %#x\n",
+					req->rq_disk->disk_name, brq->data.error,
+					(unsigned)blk_rq_pos(req),
+					(unsigned)blk_rq_sectors(req),
+					brq->cmd.resp[0], brq->stop.resp[0]);
+		}
 		if (rq_data_dir(req) == READ) {
 			if (ecc_err)
 				return MMC_BLK_ECC_ERR;
@@ -1912,7 +1959,7 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 	if (mmc_packed_cmd(mq_rq->cmd_type)) {
 		mmc_blk_abort_packed_req(mq_rq);
 	} else {
-		if (mmc_card_removed(card))
+		if (mmc_card_removed(card) || mmc_card_locked(card))
 			req->cmd_flags |= REQ_QUIET;
 		while (ret)
 			ret = blk_end_request(req, -EIO,
@@ -2072,6 +2119,14 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	md->disk->driverfs_dev = parent;
 	set_disk_ro(md->disk, md->read_only || default_ro);
 	if (area_type & MMC_BLK_DATA_AREA_RPMB)
+		md->disk->flags |= GENHD_FL_NO_PART_SCAN;
+
+
+	/* If SD/MMC is locked, any read operation will fail
+	 * so there is no point in doing a partition scan
+	 * until the device is unlocked.
+	 */
+	if (mmc_card_locked(card))
 		md->disk->flags |= GENHD_FL_NO_PART_SCAN;
 
 	/*
@@ -2375,9 +2430,10 @@ static int mmc_blk_probe(struct mmc_card *card)
 
 	string_get_size((u64)get_capacity(md->disk) << 9, STRING_UNITS_2,
 			cap_str, sizeof(cap_str));
-	pr_info("%s: %s %s %s %s\n",
-		md->disk->disk_name, mmc_card_id(card), mmc_card_name(card),
-		cap_str, md->read_only ? "(ro)" : "");
+	pr_info("%s: %s %s %s %s %s\n",
+			md->disk->disk_name, mmc_card_id(card), mmc_card_name(card),
+			cap_str, md->read_only ? "(ro)" : "",
+			mmc_card_locked(card) ? "(locked)" : "");
 
 	if (mmc_blk_alloc_parts(card, md))
 		goto out;
