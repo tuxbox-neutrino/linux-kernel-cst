@@ -661,6 +661,172 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 	return 0;
 }
 
+#ifdef CONFIG_STB_MEM_RESRV
+extern unsigned long uARM926_start, uARM926_size;
+extern unsigned long uBIS_start, uBIS_size;
+extern unsigned long uADSP_start, uADSP_size;
+extern unsigned long uVDSP_start, uVDSP_size;
+extern unsigned long uMALONE_start, uMALONE_size;
+extern unsigned long uVRAMHD_start, uVRAMHD_size;
+extern unsigned long uVRAMSD_start, uVRAMSD_size;
+extern unsigned long uMBVPHD_start, uMBVPHD_size;
+extern unsigned long uMBVPSD_start, uMBVPSD_size;
+extern unsigned long uKALCSSGEN_start, uKALCSSGEN_size;
+extern unsigned long uKALCSSCON_start, uKALCSSCON_size;
+extern unsigned long uA9_ARM926_start, uA9_ARM926_size;
+extern unsigned long uARM926_TM_start, uARM926_TM_size;
+extern unsigned long uMBVP_stdi_start, uMBVP_stdi_size;
+
+void __init early_init_dt_stb_resrv(unsigned long node)
+{
+	unsigned long len;
+	__be32 *prop;
+
+	prop = of_get_flat_dt_prop(node, "entr,ARM926-start", &len);
+	if (!prop)
+		return;
+	uARM926_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,ARM926-size", &len);
+	if (!prop)
+		return;
+	uARM926_size = of_read_ulong(prop, len/4);
+	pr_debug("uARM926_start=0x%lx  uARM926_size=0x%lx\n", uARM926_start, uARM926_size);
+
+
+	prop = of_get_flat_dt_prop(node, "entr,BIS-start", &len);
+	if (!prop)
+		return;
+	uBIS_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,BIS-size", &len);
+	if (!prop)
+		return;
+	uBIS_size = of_read_ulong(prop, len/4);
+	pr_debug("uBIS_start=0x%lx  uBIS_size=0x%lx\n", uBIS_start, uBIS_size);
+
+
+	prop = of_get_flat_dt_prop(node, "entr,ADSP-start", &len);
+	if (!prop)
+		return;
+	uADSP_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,ADSP-size", &len);
+	if (!prop)
+		return;
+	uADSP_size = of_read_ulong(prop, len/4);
+	pr_debug("uADSP_start=0x%lx  uADSP_size=0x%lx\n", uADSP_start, uADSP_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,VDSP-start", &len);
+	if (!prop)
+		return;
+	uVDSP_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,VDSP-size", &len);
+	if (!prop)
+		return;
+	uVDSP_size = of_read_ulong(prop, len/4);
+	pr_debug("uVDSP_start=0x%lx  uVDSP_size=0x%lx\n", uVDSP_start, uVDSP_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,MALONE-start", &len);
+	if (!prop)
+		return;
+	uMALONE_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,MALONE-size", &len);
+	if (!prop)
+		return;
+	uMALONE_size = of_read_ulong(prop, len/4);
+	pr_debug("uMALONE_start=0x%lx  uMALONE_size=0x%lx\n", uMALONE_start, uMALONE_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,VRAMHD-start", &len);
+	if (!prop)
+		return;
+	uVRAMHD_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,VRAMHD-size", &len);
+	if (!prop)
+		return;
+	uVRAMHD_size = of_read_ulong(prop, len/4);
+	pr_debug("uVRAMHD_start=0x%lx  uVRAMHD_size=0x%lx\n", uVRAMHD_start, uVRAMHD_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,VRAMSD-start", &len);
+	if (!prop)
+		return;
+	uVRAMSD_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,VRAMSD-size", &len);
+	if (!prop)
+		return;
+	uVRAMSD_size = of_read_ulong(prop, len/4);
+	pr_debug("uVRAMSD_start=0x%lx  uVRAMSD_size=0x%lx\n", uVRAMSD_start, uVRAMSD_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,MBVPHD-start", &len);
+	if (!prop)
+		return;
+	uMBVPHD_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,MBVPHD-size", &len);
+	if (!prop)
+		return;
+	uMBVPHD_size = of_read_ulong(prop, len/4);
+	pr_debug("uMBVPHD_start=0x%lx  uMBVPHD_size=0x%lx\n", uMBVPHD_start, uMBVPHD_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,MBVPSD-start", &len);
+	if (!prop)
+		return;
+	uMBVPSD_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,MBVPSD-size", &len);
+	if (!prop)
+		return;
+	uMBVPSD_size = of_read_ulong(prop, len/4);
+	pr_debug("uMBVPSD_start=0x%lx  uMBVPSD_size=0x%lx\n", uMBVPSD_start, uMBVPSD_size);
+    
+	prop = of_get_flat_dt_prop(node, "entr,KALCSSGEN-start", &len);
+	if (!prop)
+		return;
+	uKALCSSGEN_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,KALCSSGEN-size", &len);
+	if (!prop)
+		return;
+	uKALCSSGEN_size = of_read_ulong(prop, len/4);
+	pr_debug("uKALCSSGEN_start=0x%lx  uKALCSSGEN_size=0x%lx\n", uKALCSSGEN_start, uKALCSSGEN_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,KALCSSCON-start", &len);
+	if (!prop)
+		return;
+	uKALCSSCON_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,KALCSSCON-size", &len);
+	if (!prop)
+		return;
+	uKALCSSCON_size = of_read_ulong(prop, len/4);
+	pr_debug("uKALCSSCON_start=0x%lx  uKALCSSCON_size=0x%lx\n", uKALCSSCON_start, uKALCSSCON_size);
+    
+	prop = of_get_flat_dt_prop(node, "entr,A9_ARM926-start", &len);
+	if (!prop)
+		return;
+	uA9_ARM926_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,A9_ARM926-size", &len);
+	if (!prop)
+		return;
+	uA9_ARM926_size = of_read_ulong(prop, len/4);
+	pr_debug("uA9_ARM926_start=0x%lx  uA9_ARM926_size=0x%lx\n", uA9_ARM926_start, uA9_ARM926_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,ARM926_TM-start", &len);
+	if (!prop)
+		return;
+	uARM926_TM_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,ARM926_TM-size", &len);
+	if (!prop)
+		return;
+	uARM926_TM_size = of_read_ulong(prop, len/4);
+	pr_debug("uARM926_TM_start=0x%lx  uARM926_TM_size=0x%lx\n", uARM926_TM_start, uARM926_TM_size);
+
+	prop = of_get_flat_dt_prop(node, "entr,MBVP_stdi-start", &len);
+	if (!prop)
+		return;
+	uMBVP_stdi_start = of_read_ulong(prop, len/4);
+	prop = of_get_flat_dt_prop(node, "entr,MBVP_stdi-size", &len);
+	if (!prop)
+		return;
+	uMBVP_stdi_size = of_read_ulong(prop, len/4);
+	pr_debug("uMBVP_stdi_start=0x%lx  uMBVP_stdi_size=0x%lx\n", uMBVP_stdi_start, uMBVP_stdi_size);
+
+}
+#endif
+
 int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 				     int depth, void *data)
 {
@@ -674,6 +840,10 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 		return 0;
 
 	early_init_dt_check_for_initrd(node);
+
+#ifdef CONFIG_STB_MEM_RESRV
+	early_init_dt_stb_resrv(node);
+#endif
 
 	/* Retrieve command line */
 	p = of_get_flat_dt_prop(node, "bootargs", &l);
