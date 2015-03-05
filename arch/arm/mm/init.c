@@ -39,6 +39,51 @@
 static unsigned long phys_initrd_start __initdata = 0;
 static unsigned long phys_initrd_size __initdata = 0;
 
+#ifdef CONFIG_STB_MEM_RESRV
+unsigned long uARM926_start, uARM926_size=0;
+unsigned long uBIS_start, uBIS_size=0;
+unsigned long uADSP_start, uADSP_size=0;
+unsigned long uVDSP_start, uVDSP_size=0;
+unsigned long uMALONE_start, uMALONE_size=0;
+unsigned long uVRAMHD_start, uVRAMHD_size=0;
+unsigned long uVRAMSD_start, uVRAMSD_size=0;
+unsigned long uMBVPHD_start, uMBVPHD_size=0;
+unsigned long uMBVPSD_start, uMBVPSD_size=0;
+unsigned long uKALCSSGEN_start, uKALCSSGEN_size=0;
+unsigned long uKALCSSCON_start, uKALCSSCON_size=0;
+unsigned long uA9_ARM926_start, uA9_ARM926_size=0;
+unsigned long uARM926_TM_start, uARM926_TM_size=0;
+unsigned long uMBVP_stdi_start, uMBVP_stdi_size=0;
+EXPORT_SYMBOL(uARM926_start);
+EXPORT_SYMBOL(uARM926_size);
+EXPORT_SYMBOL(uBIS_start);
+EXPORT_SYMBOL(uBIS_size);
+EXPORT_SYMBOL(uADSP_start);
+EXPORT_SYMBOL(uADSP_size);
+EXPORT_SYMBOL(uVDSP_start);
+EXPORT_SYMBOL(uVDSP_size);
+EXPORT_SYMBOL(uMALONE_start);
+EXPORT_SYMBOL(uMALONE_size);
+EXPORT_SYMBOL(uVRAMHD_start);
+EXPORT_SYMBOL(uVRAMHD_size);
+EXPORT_SYMBOL(uVRAMSD_start);
+EXPORT_SYMBOL(uVRAMSD_size);
+EXPORT_SYMBOL(uMBVPHD_start);
+EXPORT_SYMBOL(uMBVPHD_size);
+EXPORT_SYMBOL(uMBVPSD_start);
+EXPORT_SYMBOL(uMBVPSD_size);
+EXPORT_SYMBOL(uKALCSSGEN_start);
+EXPORT_SYMBOL(uKALCSSGEN_size);
+EXPORT_SYMBOL(uKALCSSCON_start);
+EXPORT_SYMBOL(uKALCSSCON_size);
+EXPORT_SYMBOL(uA9_ARM926_start);
+EXPORT_SYMBOL(uA9_ARM926_size);
+EXPORT_SYMBOL(uARM926_TM_start);
+EXPORT_SYMBOL(uARM926_TM_size);
+EXPORT_SYMBOL(uMBVP_stdi_start);
+EXPORT_SYMBOL(uMBVP_stdi_size);
+#endif
+
 static int __init early_initrd(char *p)
 {
 	unsigned long start, size;
@@ -204,6 +249,36 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 			        (end - start) << PAGE_SHIFT, BOOTMEM_DEFAULT);
 	}
 }
+
+#ifdef CONFIG_STB_MEM_RESRV
+static int reserve_stb_pool(unsigned long base, unsigned long size)
+{
+	int err = 0;
+	if((base >= 0) && (size > 0))
+	{
+		err = reserve_bootmem(base, size, BOOTMEM_DEFAULT);
+	}
+	return err;
+}
+
+static void __init stb_soc_bootmem_init(void)
+{
+	reserve_stb_pool(uARM926_start, uARM926_size);
+	reserve_stb_pool(uBIS_start, uBIS_size);
+	reserve_stb_pool(uADSP_start, uADSP_size);
+	reserve_stb_pool(uVDSP_start, uVDSP_size);
+	reserve_stb_pool(uMALONE_start, uMALONE_size);
+	reserve_stb_pool(uVRAMHD_start, uVRAMHD_size);
+	reserve_stb_pool(uVRAMSD_start, uVRAMSD_size);
+	reserve_stb_pool(uMBVPHD_start, uMBVPHD_size);
+	reserve_stb_pool(uMBVPSD_start, uMBVPSD_size);
+	reserve_stb_pool(uKALCSSGEN_start, uKALCSSGEN_size);
+	reserve_stb_pool(uKALCSSCON_start, uKALCSSCON_size);
+	reserve_stb_pool(uA9_ARM926_start, uA9_ARM926_size);
+	reserve_stb_pool(uARM926_TM_start, uARM926_TM_size);
+	reserve_stb_pool(uMBVP_stdi_start, uMBVP_stdi_size);
+}
+#endif
 
 #ifdef CONFIG_ZONE_DMA
 
@@ -397,6 +472,10 @@ void __init bootmem_init(void)
 	find_limits(&min, &max_low, &max_high);
 
 	arm_bootmem_init(min, max_low);
+
+#ifdef CONFIG_STB_MEM_RESRV
+	stb_soc_bootmem_init();
+#endif
 
 	/*
 	 * Sparsemem tries to allocate bootmem in memory_present(),

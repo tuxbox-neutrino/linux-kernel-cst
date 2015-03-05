@@ -295,12 +295,16 @@ void __iomem * __arm_ioremap_pfn_caller(unsigned long pfn,
 		}
 	}
 
+	/* STB drivers do ioremap to create device mapping of static pools which are
+	 * reserved in RAM
+	 */
+#ifndef CONFIG_STB_MEM_RESRV
 	/*
 	 * Don't allow RAM to be mapped - this causes problems with ARMv6+
 	 */
 	if (WARN_ON(pfn_valid(pfn)))
 		return NULL;
-
+#endif
 	area = get_vm_area_caller(size, VM_IOREMAP, caller);
  	if (!area)
  		return NULL;
