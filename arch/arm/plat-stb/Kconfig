@@ -7,6 +7,28 @@ if PLAT_STB
 choice
 	prompt "Entropic STB SoC Family"
 
+config ARCH_APOLLO
+	bool "Entropic Apollo with Device Tree"
+	select MACH_APOLLO
+	select ARM_GIC
+	select CPU_V7
+	select HAVE_SMP
+	select ARCH_HAS_BARRIERS
+#	select ARCH_HAS_HOLES_MEMORYMODEL
+	select ARCH_SPARSEMEM_ENABLE
+	select NEED_MACH_MEMORY_H
+	select MIGHT_HAVE_CACHE_L2X0
+	select USE_OF
+	select IP3106
+	select SERIAL_IP3106_CONSOLE
+	select HAVE_ARM_SCU if SMP
+	select HAVE_ARM_TWD if LOCAL_TIMERS
+	select ZONE_DMA if SPARSEMEM
+#	select ARM_GLOBAL_TIMER
+
+	help
+	  Supports for Entropic STB Apollo SoC Family 
+
 endchoice
 
 config DEBUG_STB_UART
@@ -15,6 +37,7 @@ config DEBUG_STB_UART
 	default "1" if DEBUG_STB_UART1
 	default "2" if DEBUG_STB_UART2
 	default "3" if DEBUG_STB_UART3
+	default "4" if DEBUG_STB_UART4 && ARCH_APOLLO
 
 config STB_MEM_RESRV
 	depends on PLAT_STB
@@ -28,5 +51,24 @@ config STB_SPLASH
 	help
 	  Enables splash screen during kernel boot.
 
+
+choice
+	prompt "Select a UART for early kernel messages"
+
+config STB_EARLY_UART1
+	bool "UART1"
+
+config STB_EARLY_UART2
+	bool "UART2"
+
+config STB_EARLY_UART3
+	bool "UART3"
+
+config STB_EARLY_UART4
+	depends on ARCH_APOLLO
+	bool "UART4"
+endchoice
+
+source "arch/arm/mach-apollo/Kconfig"
 
 endif

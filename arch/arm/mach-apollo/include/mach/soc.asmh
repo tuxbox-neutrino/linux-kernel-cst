@@ -1,0 +1,75 @@
+/*
+ * Copyright (C) 2014, Entropic Communications. All Rights Reserved
+ * Author: Srinivas Rao L <srinivas.rao@entropic.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef __ARCH_APOLLO_ASMH
+#define __ARCH_APOLLO_ASMH
+
+#include <mach/iomap.h>
+
+/* Cortex A9 Internal Peripheral IP */
+#define CORTEX_A9_PERIPHBASE		(IO_ARM_VIRT)
+#define CORTEX_A9_SCU_BASE		(CORTEX_A9_PERIPHBASE + 0x0000)
+#define CORTEX_A9_INTC_BASE		(CORTEX_A9_PERIPHBASE + 0x0100)
+#define CORTEX_A9_GLOB_TIMER_BASE	(CORTEX_A9_PERIPHBASE + 0x0200)
+#define CORTEX_A9_PRIV_TIMER_BASE	(CORTEX_A9_PERIPHBASE + 0x0600)
+#define CORTEX_A9_DISTR_BASE		(CORTEX_A9_PERIPHBASE + 0x1000)
+#define CORTEX_A9_L2CACHE_BASE		(CORTEX_A9_PERIPHBASE + 0x2000)
+
+/* MMIO Devices */
+#define UART1_PHY_OFFSET       		(IO_PERI_OFFSET + 0xe1000)
+#define UART2_PHY_OFFSET       		(IO_PERI_OFFSET + 0xe2000)
+#define UART3_PHY_OFFSET     		(IO_PERI_OFFSET + 0xe3000)
+#define UART4_PHY_OFFSET     		(IO_PERI_OFFSET + 0xe4000)
+#define SOC_UART_MMIO_SIZE     		(0x1000)
+
+#define MMIO_GCS_BASE                  (ARM_A9_HOST_MMIO_BASE + 0x36000)
+
+#define UART1_VIRT_OFFSET          	(IO_PERI_VIRT + 0xe1000)
+#define UART2_VIRT_OFFSET          	(IO_PERI_VIRT + 0xe2000)
+#define UART3_VIRT_OFFSET          	(IO_PERI_VIRT + 0xe3000)
+#define UART4_VIRT_OFFSET          	(IO_PERI_VIRT + 0xe4000)
+
+#define MMIO_RGU_BASE           	(IO_PERI_OFFSET + 0xe6000)
+#define RST_GRESET0_REG         	(MMIO_RGU_BASE + 0x0C)
+#define RST_GRESET0_IIC1       		(1<<14)
+#define RST_GRESET0_IIC2       		(1<<15)
+#define RST_GRESET0_IIC3       		(1<<16)
+#define RST_GRESET1_REG         	(MMIO_RGU_BASE + 0x10)
+#define RST_GRESET1_A9_CORE1   		(1<<22)
+#define RST_GRESET1_IIC0       		(1<<14)
+#define RST_GRESET2_REG         	(MMIO_RGU_BASE + 0x14)
+#define RST_GRESET2_IIC4       		(1<<20)
+#define RST_LOCKCMD_REG         	(MMIO_RGU_BASE + 0x28)
+#define RST_LOCKSTAT_REG        	(MMIO_RGU_BASE + 0x2C)
+#define RST_LOCKSTAT_LOCK      		(1 << 1)     /* 0 to unlock */ 
+
+#define MMIO_GLB_BASE			(IO_PERI_OFFSET + 0xea000)
+#define HOST_CTL_REG               	(MMIO_GLB_BASE + 0x308)
+#define HOST_VINITHI_CPU1         	(1<<9)
+
+#define SCRATCHPAD_REG_BASE   		(IO_PERI_VIRT + 0xead00)
+
+/* 32bit writable and readable register. They are not 
+ * supposed to be reset, so that their values survive 
+ * a reset and allow passing of info through a reset.*/
+#define SCRATCHPAD_REG(n)		(SCRATCHPAD_REG_BASE + ((n)*4))
+#define  SCRATCH_REG_CPU_PEN        	(SCRATCHPAD_REG(20))
+#define   PRIMARY_CPU_HOLDING_PEN   	(0xCAFEBABE)
+#define   SECONDARY_CPU_HOLDING_PEN 	(0xCAFED00D)
+
+#endif /* __ARCH_APOLLO_ASMH */

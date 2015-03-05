@@ -1,0 +1,12 @@
+#
+# Apollo Machine configuration file
+#
+
+if ARCH_APOLLO
+menu "Apollo Implementation"
+
+config MACH_APOLLO
+	bool
+
+endmenu
+endif
