@@ -264,6 +264,10 @@ static int reserve_stb_pool(unsigned long base, unsigned long size, unsigned lon
 static void __init stb_soc_bootmem_init(void)
 {
 	int ret;
+#ifdef CONFIG_ARCH_APOLLO
+	struct meminfo *mi = &meminfo;
+	unsigned long meminfo_entries = mi->nr_banks;
+#endif
 
 	ret = reserve_stb_pool(0x00000000, 4096, BOOTMEM_DEFAULT);
 	if (ret < 0)
@@ -310,6 +314,19 @@ static void __init stb_soc_bootmem_init(void)
 	ret = reserve_stb_pool(uMBVP_stdi_start, uMBVP_stdi_size, BOOTMEM_EXCLUSIVE);
 	if (ret < 0)
 		pr_err("failed to reserve MBVP_stdi pool\n");
+#ifdef CONFIG_ARCH_APOLLO
+	ret = reserve_stb_pool(meminfo.bank[0].start + (meminfo.bank[0].size - SZ_2M),
+			       PAGE_SIZE, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve barrier pool on bank 0 @ %lx\n", meminfo.bank[0].start + (meminfo.bank[0].size - PAGE_SIZE));
+
+	if (meminfo_entries > 1) {
+		ret = reserve_stb_pool(meminfo.bank[1].start + (meminfo.bank[1].size - SZ_2M),
+				       PAGE_SIZE, BOOTMEM_EXCLUSIVE);
+		if (ret < 0)
+			pr_err("failed to reserve barrier pool on bank 1 @ %lx\n", meminfo.bank[1].start + (meminfo.bank[1].size - PAGE_SIZE));
+	}
+#endif
 }
 #endif
 

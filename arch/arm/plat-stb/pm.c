@@ -35,9 +35,12 @@
 #include <plat/pm.h>
 #include <mach/irqs.h>
 #include <mach/core.h>
-#include <mach/globaltimer.h>
 #include <mach/soc.h>
-
+#ifdef CONFIG_ARCH_APOLLO
+#include <mach/timer.h>
+#else
+#include <mach/globaltimer.h>
+#endif
 
 /* STB Platform uses ARM Cortex-A9 CPU and has a Cortex-M3 as the standby
  * controller processor
@@ -85,7 +88,7 @@
 #endif
 
 void __iomem *gic_cpu_base_addr = CORTEX_A9_INTC_BASE;	/* used by entry-macro.S */
-#ifdef CONFIG_ARCH_KORE3
+#if defined(CONFIG_ARCH_KORE3) || defined (CONFIG_ARCH_APOLLO)
 static unsigned int cpipe_layer_ctl_reg[8];
 static unsigned long hd_cpipe_status,sd_cpipe_status;  
 #endif
@@ -488,9 +491,10 @@ resume: cpu_init();
 	//stb_pm_restore_context();
 	stb_pm_gic_dist_restore();
 	//stb_init_irq();
+
+#ifdef CONFIG_ARM_GLOBAL_TIMER
 	stb_pm_timer_restore();
-
-
+#endif
 	DPRINTK("PM: STB Platform S2RAM -- Resumed\n");
 	local_irq_enable();
 	local_fiq_enable();
@@ -747,16 +751,15 @@ static void stb_pm_wake(void)
  */
 static int stb_pm_enter(suspend_state_t state)
 {
-	switch (state)
-	{
-		case PM_SUSPEND_STANDBY:
-			stb_pm_standby();
-			break;
-		case PM_SUSPEND_MEM:
-			stb_pm_suspend();
-			break;
-		default:
-			return -EINVAL;
+	switch (state) {
+	case PM_SUSPEND_STANDBY:
+		stb_pm_standby();
+		break;
+	case PM_SUSPEND_MEM:
+		stb_pm_suspend();
+		break;
+	default:
+		return -EINVAL;
 	}
 
 	return 0;
@@ -787,11 +790,10 @@ static void stb_pm_finish(void)
 static int stb_pm_valid(suspend_state_t state)
 {
 	/* Currently support for standby state only */
-	switch (state)
-	{
-		case PM_SUSPEND_MEM:
-		case PM_SUSPEND_STANDBY:
-			return 1;
+	switch (state) {
+	case PM_SUSPEND_MEM:
+	case PM_SUSPEND_STANDBY:
+		return 1;
 	}
 
 	return 0;
@@ -799,14 +801,14 @@ static int stb_pm_valid(suspend_state_t state)
 
 static struct platform_suspend_ops stb_pm_ops =
 {
-	.prepare    = stb_pm_prepare,
+	.prepare	= stb_pm_prepare,
 #if !defined(CONFIG_ARCH_KRONOS) && !defined(CONFIG_ARCH_KROME)
-	.prepare_late = stb_pm_prepare_late,
-	.wake       = stb_pm_wake,
+	.prepare_late	= stb_pm_prepare_late,
+	.wake		= stb_pm_wake,
 #endif
-	.enter      = stb_pm_enter,
-	.finish     = stb_pm_finish,
-	.valid      = stb_pm_valid
+	.enter		= stb_pm_enter,
+	.finish		= stb_pm_finish,
+	.valid		= stb_pm_valid
 };
 
 /* function to register routines to activate standby controller */
@@ -816,8 +818,8 @@ int stb_pm_register(struct stb_pm_stdby_ctrlr_ops *pOps)
 	if(!pOps->enter || !pOps->exit)
 		return -1;
 
-	ops.enter   = pOps->enter;
-	ops.exit    = pOps->exit;
+	ops.enter	= pOps->enter;
+	ops.exit	= pOps->exit;
 
 	/* prepare, recover and finish are optional, copy them conditionally */
 	if(pOps->prepare)

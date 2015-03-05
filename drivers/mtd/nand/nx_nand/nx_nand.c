@@ -1209,7 +1209,7 @@ static int nx_nand_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 		chip->oob_poi = &temp_buf[mtd->writesize];
 
 		/* Call write page raw */
-		nx_nand_write_page_raw(mtd, chip, temp_buf);
+		nx_nand_write_page_raw(mtd, chip, temp_buf, page);
 
 		/* Restore ECC,AES values */	
 		chip->oob_poi = oob_poi_orig;
@@ -2417,6 +2417,13 @@ static int nx_nand_probe(struct platform_device *pdev)
 		1024,
 		nx_nc->dmabuf,
 		nx_nc->dmabuf_phy);
+
+
+#ifdef CONFIG_ARCH_APOLLO
+	/* Fix the maximum OOB size to 128 for Apollo */
+	if (mtd->oobsize > 128)
+		mtd->oobsize = 128;
+#endif
 
 #if (defined (CONFIG_PLAT_STB) && !defined (CONFIG_ARCH_APOLLO))
 	memset(&FlashConfig, 0, sizeof(FlashConfig));
