@@ -21,8 +21,20 @@
 #include <asm/io.h>
 #include <asm/hardware/ip3106.h>
 
-#define UART_THR ((volatile void __iomem *)(IO_PERI_OFFSET+UART1_PORT0_OFFSET+IP3106_UART_THR_REG))
-#define UART_LSR ((volatile void __iomem *)(IO_PERI_OFFSET+UART1_PORT0_OFFSET+IP3106_UART_LSR_REG))
+#if defined(CONFIG_STB_EARLY_UART1)
+#define UART_BASE	(IO_PERI_OFFSET+UART1_PORT0_OFFSET)
+#elif defined(CONFIG_STB_EARLY_UART2)
+#define UART_BASE	(IO_PERI_OFFSET+UART2_PORT1_OFFSET)
+#elif defined(CONFIG_STB_EARLY_UART3)
+#define UART_BASE	(IO_PERI_OFFSET+UART3_PORT2_OFFSET)
+#elif defined(CONFIG_STB_EARLY_UART4)
+#define UART_BASE	(IO_PERI_OFFSET+UART4_PORT3_OFFSET)
+#else
+#define UART_BASE	(IO_PERI_OFFSET+UART1_PORT0_OFFSET)
+#endif
+
+#define UART_THR ((volatile void __iomem *)(UART_BASE+IP3106_UART_THR_REG))
+#define UART_LSR ((volatile void __iomem *)(UART_BASE+IP3106_UART_LSR_REG))
 
 static void putc(const char c)
 {
