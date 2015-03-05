@@ -64,7 +64,14 @@ static const struct ehci_driver_overrides platform_overrides __initconst = {
 	.reset =	ehci_platform_reset,
 };
 
+#ifdef CONFIG_PLAT_STB
+static struct usb_ehci_pdata ehci_platform_defaults = {
+	.caps_offset = 0x100,
+	.has_tt = 1,
+};
+#else
 static struct usb_ehci_pdata ehci_platform_defaults;
+#endif
 
 static int ehci_platform_probe(struct platform_device *dev)
 {
@@ -201,6 +208,9 @@ static int ehci_platform_resume(struct device *dev)
 static const struct of_device_id vt8500_ehci_ids[] = {
 	{ .compatible = "via,vt8500-ehci", },
 	{ .compatible = "wm,prizm-ehci", },
+#ifdef CONFIG_PLAT_STB
+	{ .compatible = "entr,stb-usb-ehci" },
+#endif
 	{}
 };
 
