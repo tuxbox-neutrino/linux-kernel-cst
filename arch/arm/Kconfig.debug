@@ -408,26 +408,33 @@ choice
 		  Say Y here if you want kernel low-level debugging support
 		  on SOCFPGA based platforms.
 
-        config DEBUG_STB_UART1
-                depends on PLAT_STB
-                bool "STB low-level debugging messages via UART1"
-                help
+	config DEBUG_STB_UART1
+		depends on PLAT_STB
+		bool "STB low-level debugging messages via UART1"
+		help
 		  Say Y here if you want the debug print routines to direct
 		  their output to the first serial port on these devices.
 
-        config DEBUG_STB_UART2
-                depends on PLAT_STB
-                bool "STB low-level debugging messages via UART2"
-                help
-                  Say Y here if you want the debug print routines to direct
-                  their output to the Second serial port on these devices.
+	config DEBUG_STB_UART2
+		depends on PLAT_STB
+		bool "STB low-level debugging messages via UART2"
+		help
+		  Say Y here if you want the debug print routines to direct
+		  their output to the Second serial port on these devices.
 
-        config DEBUG_STB_UART3
-                depends on PLAT_STB
-                bool "STB low-level debugging messages via UART3"
-                help
-                  Say Y here if you want the debug print routines to direct
-                  their output to the third serial port on these devices.
+	config DEBUG_STB_UART3
+		depends on PLAT_STB
+		bool "STB low-level debugging messages via UART3"
+		help
+		  Say Y here if you want the debug print routines to direct
+		  their output to the third serial port on these devices.
+
+	config DEBUG_STB_UART4
+		depends on PLAT_STB && ARCH_APOLLO
+		bool "STB low-level debugging messages via UART4"
+		help
+		  Say Y here if you want the debug print routines to direct
+		  their output to the third serial port on these devices.
 
 	config DEBUG_SUNXI_UART0
 		bool "Kernel low-level debugging messages via sunXi UART0"
