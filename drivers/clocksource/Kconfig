@@ -25,6 +25,17 @@ config DW_APB_TIMER_OF
 config ARMADA_370_XP_TIMER
 	bool
 
+config TIMER_STB
+	bool "STB Timer"
+	depends on ARCH_APOLLO
+	select CLKSRC_OF if OF
+	select CLKSRC_MMIO
+	default y
+	help
+	  Support for Multi Timer Unit. MTU provides access
+	  to multiple interrupt generating programmable
+	  32-bit free running decrementing counters.
+
 config SUN4I_TIMER
 	bool
 
