@@ -111,12 +111,12 @@ endif
 
 targets       := vmlinux vmlinux.lds \
 		 piggy.$(suffix_y) piggy.$(suffix_y).o \
-		 lib1funcs.o lib1funcs.S ashldi3.o ashldi3.S \
+		 lib1funcs.o lib1funcs.S div64.o div64.S ashldi3.o ashldi3.S \
 		 font.o font.c head.o misc.o $(OBJS)
 
 # Make sure files are removed during clean
 extra-y       += piggy.gzip piggy.lzo piggy.lzma piggy.xzkern \
-		 lib1funcs.S ashldi3.S $(libfdt) $(libfdt_hdrs) \
+		 lib1funcs.S div64.S ashldi3.S $(libfdt) $(libfdt_hdrs) \
 		 hyp-stub.S
 
 ifeq ($(CONFIG_FUNCTION_TRACER),y)
@@ -148,9 +148,12 @@ LDFLAGS_vmlinux += -X
 LDFLAGS_vmlinux += -T
 
 # For __aeabi_uidivmod
-lib1funcs = $(obj)/lib1funcs.o
+lib1funcs = $(obj)/lib1funcs.o $(obj)/div64.o
 
 $(obj)/lib1funcs.S: $(srctree)/arch/$(SRCARCH)/lib/lib1funcs.S
+	$(call cmd,shipped)
+
+$(obj)/div64.S: $(srctree)/arch/$(SRCARCH)/lib/div64.S 
 	$(call cmd,shipped)
 
 # For __aeabi_llsl
