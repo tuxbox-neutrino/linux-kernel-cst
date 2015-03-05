@@ -1,20 +1,21 @@
-/*
- * Copyright (C) 2014, Entropic Communications. All Rights Reserved
- * Author:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (C) 2012 Trident Microsystems (Far East) Ltd.                 */
+/*  Copyright (C) 2014, Entropic Communications. All Rights Reserved        */
+/*  Copyright (C) 2014, Coolstream International Ltd. All Rights Reserved   */
+/*  This program is free software; you can redistribute it and/or modify    */
+/*  it under the terms of the GNU General Public License as published by    */
+/*  the Free Software Foundation, using version 2 of the License.           */
+/*                                                                          */
+/*  This program is distributed in the hope that it will be useful,         */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            */
+/*  GNU General Public License for more details.                            */
+/*                                                                          */
+/*  You should have received a copy of the GNU General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.    */
+/*                                                                          */
+/****************************************************************************/
 
 #include <linux/init.h>
 #include <asm/io.h>
@@ -22,14 +23,25 @@
 #include <plat/splash_img.h>
 #include <mach/soc.h>
 
-#define HOST_CGU_BASE       	(ARM_A9_HOST_MMIO_BASE + 0x06A000)
-#define SOC_CPIPE_BASE  	(ARM_A9_HOST_MMIO_BASE + 0x120000)
-#define SOC_HDMI_TX_BASE 	(ARM_A9_HOST_MMIO_BASE + 0x179000)
-#define SOC_DENC_BASE		(ARM_A9_HOST_MMIO_BASE + 0x17B000)
-#define SOC_RFMODE_BASE   	(ARM_A9_HOST_MMIO_BASE + 0x17E000)
+#if defined(CONFIG_ARCH_KRONOS)
+#define HOST_CGU_BASE		(ARM_A9_HOST_MMIO_BASE + 0x06A000)
+#define SOC_GBL_REG_BASE	(ARM_A9_HOST_MMIO_BASE + 0x0BB000)
+#elif defined (CONFIG_ARCH_APOLLO)
+#define HOST_CGU_BASE		(ARM_A9_HOST_MMIO_BASE + 0x0E7000)
+#define SOC_GBL_REG_BASE	(ARM_A9_HOST_MMIO_BASE + 0x0EA000)
+#else
+#error ARCH not supported.
+#endif
 
-#define SOC_VARI_FORMAT_ARGB	0xfff7efe7
-#define SOC_VARI_FORMAT_ABGR	0xffe7eff7
+#define SOC_CPIPE_BASE		(ARM_A9_HOST_MMIO_BASE + 0x120000)
+#define SOC_HDMI_TX_BASE	(ARM_A9_HOST_MMIO_BASE + 0x179000)
+#define SOC_DENC_BASE		(ARM_A9_HOST_MMIO_BASE + 0x17B000)
+
+//#define GLOBALREG_MODULE_ID_REG1 0xe06bbffc
+#define CHIP_REV_MASK  0xf00
+#define CHIP_REV_SHIFT 8
+#define SOC_VARI_FORMAT_ARGB 0xfff7efe7
+#define SOC_VARI_FORMAT_ABGR 0xffe7eff7
 
 #define XRES 720
 #define YRES 480
@@ -39,10 +51,14 @@ extern unsigned long uMALONE_start;
 void __init stb_splash( void )
 {
 	int i, line_pixel, line;
-	u32 __iomem * buffer = __va(uMALONE_start);
-	u32 __iomem * pInc;
+	u32 __iomem *buffer =  __va(uMALONE_start);
+	u32 __iomem *pInc;
 	unsigned char pixel_data[3];
-	unsigned int greset_val;
+	unsigned int glb_modid,ChipRevID;
+
+	/* fix kronos rev B */
+	glb_modid = readl(GLOBALREG_MODULE_ID_REG);
+	ChipRevID = (glb_modid & CHIP_REV_MASK) >> CHIP_REV_SHIFT;
 
 	/* HD DENC programming (HD-480p raster) */
 	writel( 0x00000001, (SOC_DENC_BASE + 0x120)); /* DENC csc sel  - YCbCr out */
@@ -50,14 +66,26 @@ void __init stb_splash( void )
 	writel( 0x0000035a, (SOC_DENC_BASE + 0x108)); /* DENC Htotal */
 	writel( 0x02d0007a, (SOC_DENC_BASE + 0x10c)); /* DENC HActive */
 	writel( 0x01e00024, (SOC_DENC_BASE + 0x110)); /* DENC Vertical timing */
-	//   writel( 0x0000003f, (SOC_DENC_BASE + 0x00c)); /* DENC enable dacs - enable all the 6 DACs */
-	//   writel( 0x00020001, (SOC_DENC_BASE + 0x010)); /* DENC  {CBA} dac selection - {rpr, bpb, gy} */
-	//   writel( 0x00050603, (SOC_DENC_BASE + 0x014)); /* DENC  {FED} dac selection - all cvbs for initial validation */
+	writel( 0x0000003f, (SOC_DENC_BASE + 0x00c)); /* DENC enable dacs - enable all the 6 DACs */
+
+#if defined (CONFIG_ARCH_KRONOS) /*FIXME: this could come from kernel config/dts */
+	writel( 0x00020001, (SOC_DENC_BASE + 0x010)); /* DENC  {CBA} dac selection - {rpr, bpb, gy} */
+#elif defined (CONFIG_ARCH_APOLLO)
+	writel( 0x00000201, (SOC_DENC_BASE + 0x010)); /* DENC  {CBA} dac selection - {rpr, bpb, gy} */
+#else
+#error ARCH not supported.
+#endif
+	writel( 0x00050603, (SOC_DENC_BASE + 0x014)); /* DENC  {FED} dac selection - all cvbs for initial validation */
 	writel( 0x00000000, (SOC_DENC_BASE + 0x180)); /* DENC Sync Control- don't invert Odd/even signal */
 
-
 	/* DENC programming (SD - 480i) */
-	writel( 0x80000110, (SOC_DENC_BASE + 0x304)); /* DENC raster   - enable bits eactive & 480i(NTSC) */
+#if defined (CONFIG_ARCH_KRONOS)/*FIXME?*/
+	writel( 0x80000110, (SOC_DENC_BASE + 0x304)); /* DENC raster	- enable bits eactive & 480i(NTSC) */
+#elif defined (CONFIG_ARCH_APOLLO)
+	writel( 0x00000110, (SOC_DENC_BASE + 0x304)); /* DENC raster	- enable bits eactive & 480i(NTSC) */
+#else
+#error ARCH not supported.
+#endif
 	writel( 0x000006b4, (SOC_DENC_BASE + 0x308)); /* DENC Htotal */
 	writel( 0x05a00104, (SOC_DENC_BASE + 0x30c)); /* DENC HActive (orig - 0x0590010c) */
 	writel( 0x00f00013, (SOC_DENC_BASE + 0x310)); /* DENC Vertical timing */
@@ -73,39 +101,53 @@ void __init stb_splash( void )
 	writel( 0x00000000, (SOC_DENC_BASE + 0x394)); /* Macrovision OFF */
 	writel( 0x00000000, (SOC_DENC_BASE + 0x194)); /* Macrovision OFF */
 
+#if defined (CONFIG_ARCH_KRONOS)
 	/* DAC0 Programming (Component DACs) */
-	writel( 0x00111f00, (SOC_MMIO_GLB_BASE + 0x8fc)); /*VDAC0_CTRL0 */
-	writel( 0x42001712, (SOC_MMIO_GLB_BASE + 0x900)); /*VDAC0_CTRL1 */
-	writel( 0x00000ff0, (SOC_MMIO_GLB_BASE + 0x904)); /*VDAC0_CTRL2 */
-	writel( 0x3f000071, (SOC_MMIO_GLB_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
-	writel( 0x3f000070, (SOC_MMIO_GLB_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
-	writel( 0x3f000071, (SOC_MMIO_GLB_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x910)); /*VDAC0_TEST_CTRL */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x914)); /*VDAC0_DTO_INCR0 */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x918)); /*VDAC0_DTO_INCR1 */
+	if(ChipRevID == 0x1) { /* for Kronos rev B only */
+		writel( 0x00108000, (SOC_GBL_REG_BASE + 0x8fc)); /*VDAC0_CTRL0 */
+		writel( 0x52001712, (SOC_GBL_REG_BASE + 0x900)); /*VDAC0_CTRL1 */
+	} else {
+		writel( 0x00111f00, (SOC_GBL_REG_BASE + 0x8fc)); /*VDAC0_CTRL0 */
+		writel( 0x42001712, (SOC_GBL_REG_BASE + 0x900)); /*VDAC0_CTRL1 */
+	}
+	writel( 0x00000ff0, (SOC_GBL_REG_BASE + 0x904)); /*VDAC0_CTRL2 */
+#elif defined (CONFIG_ARCH_APOLLO)
+	writel( 0x0011c00e, (SOC_GBL_REG_BASE + 0x8fc)); /*VDAC0_CTRL0 */
+	writel( 0x52201712, (SOC_GBL_REG_BASE + 0x900)); /*VDAC0_CTRL1 */
+	writel( 0x00000ff0, (SOC_GBL_REG_BASE + 0x904)); /*VDAC0_CTRL2 */
+	writel( 0x00000124, (SOC_GBL_REG_BASE + 0x908)); /*VDAC0_CTRL3 source from MPEG0 PLL */
+#else
+#error ARCH not supported.
+#endif
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
+	writel( 0x3f000070, (SOC_GBL_REG_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x90c)); /*VDAC0_CTRL4 71-->70-->71 */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x910)); /*VDAC0_TEST_CTRL */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x914)); /*VDAC0_DTO_INCR0 */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x918)); /*VDAC0_DTO_INCR1 */
 
 	/* DAC1 Programming (SD - 480i) */
-	writel( 0x0011c00e, (SOC_MMIO_GLB_BASE + 0x920)); /*VDAC1_CTRL0 */
-	writel( 0x52201712, (SOC_MMIO_GLB_BASE + 0x924)); /*VDAC1_CTRL1 */
-	writel( 0x00000ff0, (SOC_MMIO_GLB_BASE + 0x928)); /*VDAC1_CTRL2 */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x92c)); /*VDAC1_CTRL3 source from MPEG0 PLL */
-	writel( 0x3f000071, (SOC_MMIO_GLB_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
-	writel( 0x3f000070, (SOC_MMIO_GLB_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
-	writel( 0x3f000071, (SOC_MMIO_GLB_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x934)); /*VDAC1_TEST_CTRL */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x938)); /*VDAC1_DTO_INCR0 */
-	writel( 0x00000000, (SOC_MMIO_GLB_BASE + 0x93c)); /*VDAC1_DTO_INCR1 */
+	writel( 0x0011c00e, (SOC_GBL_REG_BASE + 0x920)); /*VDAC1_CTRL0 */
+	writel( 0x52201712, (SOC_GBL_REG_BASE + 0x924)); /*VDAC1_CTRL1 */
+	writel( 0x00000ff0, (SOC_GBL_REG_BASE + 0x928)); /*VDAC1_CTRL2 */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x92c)); /*VDAC1_CTRL3 source from MPEG0 PLL */
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
+	writel( 0x3f000070, (SOC_GBL_REG_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x930)); /*VDAC1_CTRL4 71-->70-->71 */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x934)); /*VDAC1_TEST_CTRL */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x938)); /*VDAC1_DTO_INCR0 */
+	writel( 0x00000000, (SOC_GBL_REG_BASE + 0x93c)); /*VDAC1_DTO_INCR1 */
 
 	/*  Set up the DAC and CPIPE clocks */
+#if defined (CONFIG_ARCH_KRONOS)
 	writel( 0x0024f881, (HOST_CGU_BASE + 0x02c)); /* vdac0_sel -- 74.25MHz mpg0 pll */
 	writel( 0x00000001, (HOST_CGU_BASE + 0x038)); /* vdac1_sel -- 74.25MHz */
 	writel( 0x000058e2, (HOST_CGU_BASE + 0x030)); /* vdac1_sel -- 74.25MHz */
 	writel( 0x76cccccd, (HOST_CGU_BASE + 0x03c)); /* vdac2_sel -- 74.25MHz */
-	/* vdacs 3,4 and 5 are always Mpeg0 PLL, 74.25 MHz */   
+	/* vdacs 3,4 and 5 are always Mpeg0 PLL, 74.25 MHz */	
 	writel( 0x00000000, (HOST_CGU_BASE + 0x038)); /* vdac4_sel -- 74.25MHz */
 	writel( 0x00000000, (HOST_CGU_BASE + 0x040)); /* vdac5_sel -- 74.25MHz */
 	writel( 0x0024f88a, (HOST_CGU_BASE + 0x02c)); /* VCGEN_G1SEL -- 27MHz, MPG0 PLL */
-
 	writel( 0x0024f881, (HOST_CGU_BASE + 0x044)); /* VCGEN_G2SEL -- 54MHz, MPG0 PLL */
 	writel( 0x00000001, (HOST_CGU_BASE + 0x050)); /* VCGEN_G3SEL -- 27MHz, MPG0 PLL */
 	writel( 0x000058e2, (HOST_CGU_BASE + 0x048)); /* VCGEN_G4SEL -- 13.5MHz, MPG0 PLL */
@@ -125,6 +167,23 @@ void __init stb_splash( void )
 	writel( 0x00000000, (HOST_CGU_BASE + 0x1b0)); /* VCGEN_G5SEL -- 27MHz, MPG0 PLL */
 	writel( 0x00000000, (HOST_CGU_BASE + 0x1b4)); /* VCGEN_G6SEL -- 27MHz, MPG0 PLL */
 	writel( 0x00000003, (HOST_CGU_BASE + 0x160)); /* VCGEN_G6SEL -- 27MHz, MPG0 PLL */
+#elif defined(CONFIG_ARCH_APOLLO)
+	writel( 0x00000002, (HOST_CGU_BASE + 0x658)); /* vdac0_sel -- 74.25MHz mpg0 pll */
+	writel( 0x00000002, (HOST_CGU_BASE + 0x65c)); /* vdac1_sel -- 74.25MHz */
+	writel( 0x00000002, (HOST_CGU_BASE + 0x660)); /* vdac2_sel -- 74.25MHz */
+	/* vdacs 3,4 and 5 are always Mpeg0 PLL, 74.25 MHz */
+	writel( 0x00000002, (HOST_CGU_BASE + 0x664)); /* vdac3_sel -- 74.25MHz mpg0 pll */
+	writel( 0x00000002, (HOST_CGU_BASE + 0x668)); /* vdac4_sel -- 74.25MHz */
+	writel( 0x00000002, (HOST_CGU_BASE + 0x66c)); /* vdac5_sel -- 74.25MHz */
+	writel( 0x00000005, (HOST_CGU_BASE + 0x640)); /* VCGEN_G1SEL -- 27MHz, MPG0 PLL */
+	writel( 0x00000004, (HOST_CGU_BASE + 0x644)); /* VCGEN_G2SEL -- 54MHz, MPG0 PLL */
+	writel( 0x00000006, (HOST_CGU_BASE + 0x648)); /* VCGEN_G3SEL -- 27MHz, MPG0 PLL */
+	writel( 0x00000005, (HOST_CGU_BASE + 0x64c)); /* VCGEN_G4SEL -- 13.5MHz, MPG0 PLL */
+	writel( 0x00000006, (HOST_CGU_BASE + 0x650)); /* VCGEN_G5SEL -- 27MHz, MPG0 PLL */
+	writel( 0x00000000, (HOST_CGU_BASE + 0x654)); /* VCGEN_G6SEL -- 27MHz, MPG0 PLL */
+#else
+#error ARCH not supported.
+#endif
 
 	/* CPIPE Sync Timing Generator settings */
 	writel( 0x00000000, (SOC_CPIPE_BASE + 0x8000)); /* progressive */
@@ -170,14 +229,22 @@ void __init stb_splash( void )
 	writel( 0x00000000, (SOC_DENC_BASE + 0x120)); /* Bypass DENC CSC */
 
 	/* Set up the formatting PLL - programmed thru the HDMI I/F - and the serializer PLL */
-	writel( 0x00000003, (HOST_CGU_BASE + 0x164));         /* Enable TMDS clock for HDMI */
-	writel( 0x00000020, (HOST_CGU_BASE + 0x098));         /* PLL_HDMI_CON3_CTL - use MPG0 PLL for Fmt PLL Source */
-	writel( 0x80000002, (HOST_CGU_BASE + 0x08c));         /* PLL_HDMI_CON0_CTL - use HDMI register I/F rather than direct I/F */
-	writel( 0x0102040a, (SOC_HDMI_TX_BASE + 0x034));   /* FMT_PLL_SETTINGS - 480i, 480p */
-	writel( 0x00000203, (SOC_HDMI_TX_BASE + 0x030));   /* SER_PLL_SETTINGS - 480i, 480p (27 MHz) */
-	writel( 0x00000100, (SOC_HDMI_TX_BASE + 0x038));   /* PHY_CTRL - apply the pll settings */
-	writel( 0x00000130, (SOC_HDMI_TX_BASE + 0x038));   /* PHY_CTRL */
-	writel( 0x00000100, (SOC_HDMI_TX_BASE + 0x038));   /* PHY_CTRL */
+#if defined(CONFIG_ARCH_KRONOS)
+	writel( 0x00000003, (HOST_CGU_BASE + 0x164)); /* Enable TMDS clock for HDMI */
+	writel( 0x00000020, (HOST_CGU_BASE + 0x098)); /* PLL_HDMI_CON3_CTL - use MPG0 PLL for Fmt PLL Source */
+	writel( 0x80000002, (HOST_CGU_BASE + 0x08c)); /* PLL_HDMI_CON0_CTL - use HDMI register I/F rather than direct I/F */
+#elif defined(CONFIG_ARCH_APOLLO)
+	writel( 0x00000003, (HOST_CGU_BASE + 0x2fc));     /* Enable TMDS clock for HDMI */
+	writel( 0x00000020, (HOST_CGU_BASE + 0x11c));     /* PLL_HDMI_CON3_CTL - use MPG0 PLL for Fmt PLL Source */
+	writel( 0x80000002, (HOST_CGU_BASE + 0x110));     /* PLL_HDMI_CON0_CTL - use HDMI register I/F rather than direct I/F */
+#else
+#error ARCH not supported.
+#endif
+	writel( 0x0102040a, (SOC_HDMI_TX_BASE + 0x034)); /* FMT_PLL_SETTINGS - 480i, 480p */
+	writel( 0x00000203, (SOC_HDMI_TX_BASE + 0x030)); /* SER_PLL_SETTINGS - 480i, 480p (27 MHz) */
+	writel( 0x00000100, (SOC_HDMI_TX_BASE + 0x038)); /* PHY_CTRL - apply the pll settings */
+	writel( 0x00000130, (SOC_HDMI_TX_BASE + 0x038)); /* PHY_CTRL */
+	writel( 0x00000100, (SOC_HDMI_TX_BASE + 0x038)); /* PHY_CTRL */
 
 	/* HDMI programming */
 	writel( 0x0000003f, (SOC_HDMI_TX_BASE + 0x038));
@@ -195,8 +262,8 @@ void __init stb_splash( void )
 	writel( 0x42000410, (SOC_HDMI_TX_BASE + 0x000));
 	writel( 0x31000009, (SOC_HDMI_TX_BASE + 0x400));
 	writel( 0x00000016, (SOC_HDMI_TX_BASE + 0x404));
-	//   writel( 0x000a0184, (SOC_HDMI_TX_BASE + 0x180));
-	//   writel( 0x00000170, (SOC_HDMI_TX_BASE + 0x184));
+	writel( 0x000a0184, (SOC_HDMI_TX_BASE + 0x180));
+	writel( 0x00000170, (SOC_HDMI_TX_BASE + 0x184));
 	writel( 0x00000000, (SOC_HDMI_TX_BASE + 0x188));
 	writel( 0x00000000, (SOC_HDMI_TX_BASE + 0x18c));
 	writel( 0x00000000, (SOC_HDMI_TX_BASE + 0x300));
@@ -213,23 +280,36 @@ void __init stb_splash( void )
 	writel( 0x00000004, (SOC_HDMI_TX_BASE + 0x0e8));
 	writel( 0x91c1c240, (SOC_HDMI_TX_BASE + 0x0ec));
 
+#if defined(CONFIG_ARCH_APOLLO)
+	/*----------------------- Calibrate VDAC's ----------------------*/
+	writel( 0x0009c00e, (SOC_GBL_REG_BASE + 0x8fc)); /*reset VDAC0 */
+	writel( 0x0009c00e, (SOC_GBL_REG_BASE + 0x920)); /*reset VDAC1 */
+	writel( 0x0019f60e, (SOC_GBL_REG_BASE + 0x8fc)); /*VDAC0_CTRL0 30 MHz power */
+	writel( 0x0019f60e, (SOC_GBL_REG_BASE + 0x920)); /*VDAC1_CTRL0 30 MHz power */
+	writel( 0x52201750, (SOC_GBL_REG_BASE + 0x900)); /*VDAC0_CTRL1 */
+	writel( 0x52201750, (SOC_GBL_REG_BASE + 0x924)); /*VDAC1_CTRL1 */
+	writel( 0x52201752, (SOC_GBL_REG_BASE + 0x900)); /*VDAC0_CTRL1 */
+	writel( 0x52201752, (SOC_GBL_REG_BASE + 0x924)); /*VDAC1_CTRL1 */
+	writel( 0x3f000070, (SOC_GBL_REG_BASE + 0x90c)); /*VDAC0_CTRL4 70-->71 */
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x90c));
+	writel( 0x3f000070, (SOC_GBL_REG_BASE + 0x930)); /*VDAC1_CTRL4 70-->71 */
+	writel( 0x3f000071, (SOC_GBL_REG_BASE + 0x930));
+#endif
 	/*** Put the splash screen in memory ***/
 	pInc = buffer;
 	/* Clear the buffer to a white background. */
-	for ( i=0; i<(XRES * YRES); i++)
-	{
+	for ( i=0; i<(XRES * YRES); i++) {
 		writel( 0x0, pInc);
 		pInc++;
 	}
+
 	/* Calculate Address to begin write. */
 	pInc = (u32 *)((u32)buffer + ((XRES * ( (YRES - logo_height) / 2 ) * 4 )));
-	for ( line = 0; line< logo_height; line++)
-	{
+	for ( line = 0; line< logo_height; line++) {
 		pInc += (XRES - logo_width) / 2;
-		for ( line_pixel = 0; line_pixel< logo_width; line_pixel++)
-		{
+		for ( line_pixel = 0; line_pixel< logo_width; line_pixel++) {
 			HEADER_PIXEL(header_data, pixel_data)
-				*pInc = 0xff000000 + (pixel_data[2] << 16) + (pixel_data[1] << 8) + pixel_data[0];
+			*pInc = 0xff000000 + (pixel_data[2] << 16) + (pixel_data[1] << 8) + pixel_data[0];
 			pInc++;
 		}
 		pInc += (XRES - logo_width) / 2;
@@ -264,7 +344,7 @@ void __init stb_splash( void )
 
 	/* GFX VCBM*/
 	writel( 0x00000001, (SOC_CPIPE_BASE + 0x8e90)); /* Bypass GFX VCBM */
-	// writel( 0x00000001, (SOC_CPIPE_BASE + 0x8c00)); /* apply settings to layer */
+// writel( 0x00000001, (SOC_CPIPE_BASE + 0x8c00)); /* apply settings to layer */
 
 	/* GNSH Settings */
 	writel( 0x00000010, (SOC_CPIPE_BASE + 0x94a0)); /* Turn off MSB inversion */
@@ -291,8 +371,6 @@ void __init stb_splash( void )
 	writel( 0x00000002, (SOC_HDMI_TX_BASE + 0x148)); /* format = 2 */
 	writel( 0x00000000, (SOC_HDMI_TX_BASE + 0x14c));
 	writel( 0x00001403, (SOC_HDMI_TX_BASE + 0x310));
-	writel( 0x000a0184, (SOC_HDMI_TX_BASE + 0x180));
-	writel( 0x00000170, (SOC_HDMI_TX_BASE + 0x184));
 
 	/* HDMI GNSH Settings */
 	writel( 0x00000010, (SOC_CPIPE_BASE + 0x98a0)); /* Turn off MSB inversion */
@@ -302,10 +380,10 @@ void __init stb_splash( void )
 	writel( 0x00000007, (SOC_CPIPE_BASE + 0x98b4)); /* Turn off MSB inversion */
 
 	/* HDMI OUTC */
-	writel( 0x04080200, (SOC_CPIPE_BASE + 0x98c0));    /* For CPIPE-HDMI */
-	writel( 0x030f0002, (SOC_CPIPE_BASE + 0x98e0));    /* For CPIPE-HDMI RGB match */
-	writel( 0x000fff00, (SOC_CPIPE_BASE + 0x98e4));    /* For CPIPE-HDMI RGB match */
-	writel( 0x000fff00, (SOC_CPIPE_BASE + 0x98e8));    /* For CPIPE-HDMI RGB match */
+	writel( 0x04080200, (SOC_CPIPE_BASE + 0x98c0));	 /* For CPIPE-HDMI */
+	writel( 0x030f0002, (SOC_CPIPE_BASE + 0x98e0));	 /* For CPIPE-HDMI RGB match */
+	writel( 0x000fff00, (SOC_CPIPE_BASE + 0x98e4));	 /* For CPIPE-HDMI RGB match */
+	writel( 0x000fff00, (SOC_CPIPE_BASE + 0x98e8));	 /* For CPIPE-HDMI RGB match */
 
 	/* HDMI Set up color space conversions  RGB255 -> 601 */
 	writel( 0x00000016, (SOC_CPIPE_BASE + 0x9a90)); /* width and height */
@@ -320,16 +398,16 @@ void __init stb_splash( void )
 	writel( 0x00000001, (SOC_CPIPE_BASE + 0x9800)); /* width and height */
 
 	/* set up SD RIF for GFX */
-	writel( 0xa000001f,              (SOC_CPIPE_BASE + 0x4c44)); /* 32 bit variable width */
-	writel( SOC_VARI_FORMAT_ARGB,    (SOC_CPIPE_BASE + 0x4c48)); /* 32 bit variable width */
-	writel( 0x80500013,              (SOC_CPIPE_BASE + 0x4c54)); /* start DMA at line 8 pixel 0x90 */
-	writel( 0x00000b3f,              (SOC_CPIPE_BASE + 0x4c5c)); /* width is 719 pels */
-	writel( uMALONE_start,           (SOC_CPIPE_BASE + 0x4c64)); /* Buffer A Address */
-	writel( uMALONE_start + 0xb40,   (SOC_CPIPE_BASE + 0x4c68)); /* Buffer B Address */
-	writel( 0x00001680,              (SOC_CPIPE_BASE + 0x4c6c)); /* stride is 720*4 */
-	writel( 0x00001680,              (SOC_CPIPE_BASE + 0x4c70)); /* stride is 720*4 */
-	writel( 0x00001680,              (SOC_CPIPE_BASE + 0x4c84)); /* stride is 720*4 */
-	writel( 0x00000001,              (SOC_CPIPE_BASE + 0x4d90)); /* bypass alpha multi */
+	writel( 0xa000001f, (SOC_CPIPE_BASE + 0x4c44)); /* 32 bit variable width */
+	writel( SOC_VARI_FORMAT_ARGB, (SOC_CPIPE_BASE + 0x4c48)); /* 32 bit variable width */
+	writel( 0x80500013, (SOC_CPIPE_BASE + 0x4c54)); /* start DMA at line 8 pixel 0x90 */
+	writel( 0x00000b3f, (SOC_CPIPE_BASE + 0x4c5c)); /* width is 719 pels */
+	writel( uMALONE_start, (SOC_CPIPE_BASE + 0x4c64)); /* Buffer A Address */
+	writel( uMALONE_start + 0xb40, (SOC_CPIPE_BASE + 0x4c68)); /* Buffer B Address */
+	writel( 0x00001680, (SOC_CPIPE_BASE + 0x4c6c)); /* stride is 720*4 */
+	writel( 0x00001680, (SOC_CPIPE_BASE + 0x4c70)); /* stride is 720*4 */
+	writel( 0x00001680, (SOC_CPIPE_BASE + 0x4c84)); /* stride is 720*4 */
+	writel( 0x00000001, (SOC_CPIPE_BASE + 0x4d90)); /* bypass alpha multi */
 
 	/* Setup SD layer */
 	writel( 0x00f002d0, (SOC_CPIPE_BASE + 0x4c04)); /* width and height */
@@ -362,50 +440,14 @@ void __init stb_splash( void )
 	writel( 0x02000000, (SOC_CPIPE_BASE + 0x56b0)); /* width and height */
 	writel( 0x00000001, (SOC_CPIPE_BASE + 0x5400)); /* width and height */
 
-	writel( 0x02060502, (SOC_CPIPE_BASE + 0x54e0)); /* !hsync, blank to SD DENC */
-	writel( 0x030f0502, (SOC_CPIPE_BASE + 0x94e0)); /* !hsync, !vsync, blank, odd/even to HD DENC */
-	writel( 0x030f0502, (SOC_CPIPE_BASE + 0x98e0)); /* For CPIPE-HDMI RGB match */
-
-	/* Settings for Channel 3/4 */
-	greset_val = readl(RST_GRESET2_REG);
-	if(!(greset_val & 0x4)) 
-	{
-		int rdata =0;
-		writel(0x00000001, (HOST_CGU_BASE + 0x204));          // #SELECT 50M Clock
-		writel(0x00000011, (SOC_RFMODE_BASE +0x004));       // #TASTER_SOFT_RESETS_REG
-		writel(0x00000000, (SOC_RFMODE_BASE +0x004));       // #TASTER_SOFT_RESETS_REG
-		writel(0x00000039, (SOC_RFMODE_BASE +0x3fc));
-		rdata = readl(SOC_RFMODE_BASE + 0x250 );                            // #TASTER_PLL_CONFIG_REG
-		writel((rdata & 0xffffefff), (SOC_RFMODE_BASE +0x250));
-		rdata = readl(SOC_RFMODE_BASE + 0x250);                            // #TASTER_PLL_CONFIG_REG
-		writel((rdata | 0x00000100), (SOC_RFMODE_BASE +0x250));
-		rdata = readl(SOC_RFMODE_BASE + 0x254);                            // #TASTER_DAC_CONFIG_REG
-		writel((rdata | 0x00000011), (SOC_RFMODE_BASE +0x254));
-		rdata = readl(SOC_RFMODE_BASE + 0x250);                            // #TASTER_PLL_CONFIG_REG
-		while((rdata & 0x01000000) == 0x00000000 )
-		{
-			rdata = readl(SOC_RFMODE_BASE + 0x250);                         // #TASTER_PLL_CONFIG_REG
-		}
-		writel(0x00000003, (HOST_CGU_BASE + 0x204));          // #SELECT 225M Clock
-		/* RF MODE IP SETTINGS*/
-		{
-			rdata=0;
-			writel(0x00000039, (SOC_RFMODE_BASE +0x3fc));  
-			//#select internal test patern or nornimal work 0xa for test mode
-			writel(0x00000000, (SOC_RFMODE_BASE +0x3ec));
-			rdata = readl(SOC_RFMODE_BASE + 0x244);                         // #TASTER_CHANNEL_3/4_SELECT_REG
-			writel((rdata&0xFFFFFFFE), (SOC_RFMODE_BASE +0x244));
-			writel((0x0002d82e), (SOC_RFMODE_BASE +0x214));
-			writel((0x00005e80), (SOC_RFMODE_BASE +0x218));  // #write RF_MOD_depth,default 0x64e6 
-			writel((0x0000001b), (SOC_RFMODE_BASE +0x240));  // #  VDAC-gain default 1b   
-			writel((0x00000f00), (SOC_RFMODE_BASE +0x200));
-			writel((0x00000000), (SOC_RFMODE_BASE +0x31c));  // #0x00011001 shut RF video RF and audio RF
-			writel((0x00000001), (SOC_RFMODE_BASE +0x004));  // #TASTER_SOFT_RESETS_REG
-			writel((0x00000000), (SOC_RFMODE_BASE +0x004));  // #TASTER_SOFT_RESETS_REG
-		}
+#if defined (CONFIG_ARCH_KRONOS)
+	/* Color fix for Kronos Rev B */
+	if (ChipRevID >= 0x1) {
+		writel( 0x02060502, (SOC_CPIPE_BASE + 0x54e0)); /* !hsync, blank to SD DENC */
+		writel( 0x030f0502, (SOC_CPIPE_BASE + 0x94e0)); /* !hsync, !vsync, blank, odd/even to HD DENC */
+		writel( 0x030f0502, (SOC_CPIPE_BASE + 0x98e0)); /* For CPIPE-HDMI RGB match */
 	}
+#endif
 	writel( 0x00000001, (SOC_CPIPE_BASE + 0x4c00)); /* apply settings to layer */
 	writel( 0x00000001, (SOC_CPIPE_BASE + 0x8c00)); /* apply settings to layer */
-
-	return;
 }
