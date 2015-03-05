@@ -1,0 +1,9 @@
+menu "GCS DMAC IP_1902 support"
+
+config MTD_NX_NAND_DMAC
+  tristate "GCS DMAC IP_1902 support"
+	default y if MTD_NX_NAND
+  help
+    Support for the GCS DMAC IP_1902 block in Apollo
+
+endmenu

@@ -1,0 +1,43 @@
+#NAND driver for STB Platform
+
+menuconfig MTD_NX_NAND
+	tristate "NAND Device IP_2070 Support"
+	depends on MTD_NAND
+	help
+	  This enables support for accessing NAND flash
+	  devices on TV55X platforms.
+
+if MTD_NX_NAND
+
+choice #ECC options
+	prompt "STB SoC ECC options"
+	depends on MTD_NX_NAND
+	default  MTD_NX_NAND_HWECC
+
+config MTD_NX_NAND_HWECC
+	bool "HWECC RS codec support"
+	help
+	  This is enables the HW ECC provided by IP_2070 controller.
+		The controller supports 5 symbols correction per 512 bytes.
+
+config MTD_NX_NAND_SWECC
+	bool "SWECC support"
+	help
+	  This is enables the SW ECC provided by MTD subsytem.
+		The controller supports 1 bit correction per 256 bytes.
+
+config MTD_NX_NAND_NONEECC
+	bool "ECC support disabled"
+	help
+	  This is disables the ECC support.
+
+endchoice #ECC options
+
+endif # MTD_NX_NAND
+
+config MTD_NX_NAND_PART_PARSE
+  tristate "Partition parser support IP_2070 driver"
+  depends on MTD_NX_NAND
+  help
+    This enables the Flash partition parser functionality
+
