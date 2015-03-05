@@ -133,6 +133,19 @@ config MV_XOR
 	---help---
 	  Enable support for the Marvell XOR engine.
 
+config NX_DMAC_1902
+	bool "NXP DMA Controller IP_1902 support"
+	depends on PLAT_STB
+	select DMA_ENGINE
+	help
+	This enables the Entropic DMA Controller IP_1902 support.
+
+
+config NX_DMAC_NR_OF_DESCS
+	int "Number of DMAC descriptor per channel"
+	depends on NX_DMAC_1902
+	default "1025"
+
 config MX3_IPU
 	bool "MX3x Image Processing Unit support"
 	depends on ARCH_MXC
