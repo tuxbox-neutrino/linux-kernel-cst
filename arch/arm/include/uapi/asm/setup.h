@@ -126,6 +126,11 @@ struct tag_cmdline {
 	char	cmdline[1];	/* this is the minimum size */
 };
 
+#define ATAG_MAC	0x5441000A
+struct tag_mac {
+	__u8 mac_addr[6];
+};
+
 /* acorn RiscPC specific information */
 #define ATAG_ACORN	0x41000101
 
@@ -155,6 +160,7 @@ struct tag {
 		struct tag_revision	revision;
 		struct tag_videolfb	videolfb;
 		struct tag_cmdline	cmdline;
+		struct tag_mac		mac;
 
 		/*
 		 * Acorn specific
