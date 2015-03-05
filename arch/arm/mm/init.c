@@ -89,6 +89,7 @@ void __init early_init_dt_setup_initrd_arch(unsigned long start, unsigned long e
  * of holes in the memory map.  It is populated by arm_add_memory().
  */
 struct meminfo meminfo;
+EXPORT_SYMBOL_GPL(meminfo);
 
 void show_mem(unsigned int filter)
 {
