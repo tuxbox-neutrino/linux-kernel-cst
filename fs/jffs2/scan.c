@@ -159,16 +159,41 @@ int jffs2_scan_medium(struct jffs2_sb_info *c)
 		/* Now decide which list to put it on */
 		switch(ret) {
 		case BLK_STATE_ALLFF:
-			/*
-			 * Empty block.   Since we can't be sure it
-			 * was entirely erased, we just queue it for erase
-			 * again.  It will be marked as such when the erase
-			 * is complete.  Meanwhile we still count it as empty
-			 * for later checks.
+#ifdef CONFIG_PLAT_STB
+			/* 
+			 * NAND controller IP_2017 cannot write cleanmarkers
+			 * in the oob area. So treat blocks which don't read
+			 * cleanmarker instead read all FF's in the oob area
+			 * as valid empty block and avoid triggering garbage
+			 * collection for such erased blocks. This fix will
+			 * improve jffs2 mount time and rw performance for
+			 * for IP_2017 case but erase operations will not remain
+			 * power failure safe for JFFS2.
 			 */
-			empty_blocks++;
-			list_add(&jeb->list, &c->erase_pending_list);
-			c->nr_erasing_blocks++;
+			if (jffs2_cleanmarker_oob(c))
+			{
+				/* Copied as is from below switch case:-
+				case BLK_STATE_CLEANMARKER:
+					if (!jeb->dirty_size) {..}
+				*/
+				/* It's actually free */
+				list_add(&jeb->list, &c->free_list);
+				c->nr_free_blocks++;
+			}
+			else
+#endif
+			{
+				/*
+				 * Empty block.   Since we can't be sure it
+				 * was entirely erased, we just queue it for erase
+				 * again.  It will be marked as such when the erase
+				 * is complete.  Meanwhile we still count it as empty
+				 * for later checks.
+				 */
+				empty_blocks++;
+				list_add(&jeb->list, &c->erase_pending_list);
+				c->nr_erasing_blocks++;
+			}
 			break;
 
 		case BLK_STATE_CLEANMARKER:
