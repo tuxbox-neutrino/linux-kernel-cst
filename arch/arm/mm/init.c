@@ -251,32 +251,65 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 }
 
 #ifdef CONFIG_STB_MEM_RESRV
-static int reserve_stb_pool(unsigned long base, unsigned long size)
+static int reserve_stb_pool(unsigned long base, unsigned long size, unsigned long type)
 {
 	int err = 0;
 	if((base >= 0) && (size > 0))
 	{
-		err = reserve_bootmem(base, size, BOOTMEM_DEFAULT);
+		err = reserve_bootmem(base, size, type);
 	}
 	return err;
 }
 
 static void __init stb_soc_bootmem_init(void)
 {
-	reserve_stb_pool(uARM926_start, uARM926_size);
-	reserve_stb_pool(uBIS_start, uBIS_size);
-	reserve_stb_pool(uADSP_start, uADSP_size);
-	reserve_stb_pool(uVDSP_start, uVDSP_size);
-	reserve_stb_pool(uMALONE_start, uMALONE_size);
-	reserve_stb_pool(uVRAMHD_start, uVRAMHD_size);
-	reserve_stb_pool(uVRAMSD_start, uVRAMSD_size);
-	reserve_stb_pool(uMBVPHD_start, uMBVPHD_size);
-	reserve_stb_pool(uMBVPSD_start, uMBVPSD_size);
-	reserve_stb_pool(uKALCSSGEN_start, uKALCSSGEN_size);
-	reserve_stb_pool(uKALCSSCON_start, uKALCSSCON_size);
-	reserve_stb_pool(uA9_ARM926_start, uA9_ARM926_size);
-	reserve_stb_pool(uARM926_TM_start, uARM926_TM_size);
-	reserve_stb_pool(uMBVP_stdi_start, uMBVP_stdi_size);
+	int ret;
+
+	ret = reserve_stb_pool(0x00000000, 4096, BOOTMEM_DEFAULT);
+	if (ret < 0)
+		pr_err("failed to reserve A9 vector\n");
+	ret = reserve_stb_pool(uARM926_start, uARM926_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve ARM926 pool\n");
+	ret = reserve_stb_pool(uBIS_start, uBIS_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve BIS pool\n");
+	ret = reserve_stb_pool(uADSP_start, uADSP_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve ADSP pool\n");
+	ret = reserve_stb_pool(uVDSP_start, uVDSP_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve VDSP pool\n");
+	ret = reserve_stb_pool(uMALONE_start, uMALONE_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve MALONE pool\n");
+	ret = reserve_stb_pool(uVRAMHD_start, uVRAMHD_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve VRAMHD pool\n");
+	ret = reserve_stb_pool(uVRAMSD_start, uVRAMSD_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve VRAMSD pool\n");
+	ret = reserve_stb_pool(uMBVPHD_start, uMBVPHD_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve MBVPHD pool\n");
+	ret = reserve_stb_pool(uMBVPSD_start, uMBVPSD_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve MBVPSD pool\n");
+	ret = reserve_stb_pool(uKALCSSGEN_start, uKALCSSGEN_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve KALCSSGEN pool\n");
+	ret = reserve_stb_pool(uKALCSSCON_start, uKALCSSCON_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve KALCSSCON pool\n");
+	ret = reserve_stb_pool(uA9_ARM926_start, uA9_ARM926_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve A9_ARM926 pool\n");
+	ret = reserve_stb_pool(uARM926_TM_start, uARM926_TM_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve ARM926_TM pool\n");
+	ret = reserve_stb_pool(uMBVP_stdi_start, uMBVP_stdi_size, BOOTMEM_EXCLUSIVE);
+	if (ret < 0)
+		pr_err("failed to reserve MBVP_stdi pool\n");
 }
 #endif
 
