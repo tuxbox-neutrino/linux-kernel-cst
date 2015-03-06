@@ -699,19 +699,50 @@ void rc_keydown_notimeout(struct rc_dev *dev, int scancode, u8 toggle)
 }
 EXPORT_SYMBOL_GPL(rc_keydown_notimeout);
 
+int rc_open(struct rc_dev *rdev)
+{
+	int rval = 0;
+
+	if (!rdev)
+		return -EINVAL;
+
+	mutex_lock(&rdev->lock);
+	if (!rdev->users++)
+		rval = rdev->open(rdev);
+
+	if (rval)
+		rdev->users--;
+
+	mutex_unlock(&rdev->lock);
+
+	return rval;
+}
+EXPORT_SYMBOL_GPL(rc_open);
+
 static int ir_open(struct input_dev *idev)
 {
 	struct rc_dev *rdev = input_get_drvdata(idev);
 
-	return rdev->open(rdev);
+	return rc_open(rdev);
 }
+
+void rc_close(struct rc_dev *rdev)
+{
+	if (rdev) {
+		mutex_lock(&rdev->lock);
+
+		 if (!--rdev->users)
+			rdev->close(rdev);
+
+		mutex_unlock(&rdev->lock);
+	}
+}
+EXPORT_SYMBOL_GPL(rc_close);
 
 static void ir_close(struct input_dev *idev)
 {
 	struct rc_dev *rdev = input_get_drvdata(idev);
-
-	 if (rdev)
-		rdev->close(rdev);
+	rc_close(rdev);
 }
 
 /* class for /sys/class/rc */
@@ -928,6 +959,130 @@ out:
 	return ret;
 }
 
+/**
+ * struct rc_filter_attribute - Device attribute relating to a filter type.
+ * @attr:	Device attribute.
+ * @type:	Filter type.
+ * @mask:	false for filter value, true for filter mask.
+ */
+struct rc_filter_attribute {
+	struct device_attribute		attr;
+	enum rc_filter_type		type;
+	bool				mask;
+};
+#define to_rc_filter_attr(a) container_of(a, struct rc_filter_attribute, attr)
+
+#define RC_FILTER_ATTR(_name, _mode, _show, _store, _type, _mask)	\
+	struct rc_filter_attribute dev_attr_##_name = {			\
+		.attr = __ATTR(_name, _mode, _show, _store),		\
+		.type = (_type),					\
+		.mask = (_mask),					\
+	}
+
+/**
+ * show_filter() - shows the current scancode filter value or mask
+ * @device:	the device descriptor
+ * @attr:	the device attribute struct
+ * @buf:	a pointer to the output buffer
+ *
+ * This routine is a callback routine to read a scancode filter value or mask.
+ * It is trigged by reading /sys/class/rc/rc?/[wakeup_]filter[_mask].
+ * It prints the current scancode filter value or mask of the appropriate filter
+ * type in hexadecimal into @buf and returns the size of the buffer.
+ *
+ * Bits of the filter value corresponding to set bits in the filter mask are
+ * compared against input scancodes and non-matching scancodes are discarded.
+ *
+ * dev->lock is taken to guard against races between device registration,
+ * store_filter and show_filter.
+ */
+static ssize_t show_filter(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct rc_dev *dev = to_rc_dev(device);
+	struct rc_filter_attribute *fattr = to_rc_filter_attr(attr);
+	u32 val;
+
+	/* Device is being removed */
+	if (!dev)
+		return -EINVAL;
+
+	mutex_lock(&dev->lock);
+	if (!dev->s_filter)
+		val = 0;
+	else if (fattr->mask)
+		val = dev->scancode_filters[fattr->type].mask;
+	else
+		val = dev->scancode_filters[fattr->type].data;
+	mutex_unlock(&dev->lock);
+
+	return sprintf(buf, "%#x\n", val);
+}
+
+/**
+ * store_filter() - changes the scancode filter value
+ * @device:	the device descriptor
+ * @attr:	the device attribute struct
+ * @buf:	a pointer to the input buffer
+ * @len:	length of the input buffer
+ *
+ * This routine is for changing a scancode filter value or mask.
+ * It is trigged by writing to /sys/class/rc/rc?/[wakeup_]filter[_mask].
+ * Returns -EINVAL if an invalid filter value for the current protocol was
+ * specified or if scancode filtering is not supported by the driver, otherwise
+ * returns @len.
+ *
+ * Bits of the filter value corresponding to set bits in the filter mask are
+ * compared against input scancodes and non-matching scancodes are discarded.
+ *
+ * dev->lock is taken to guard against races between device registration,
+ * store_filter and show_filter.
+ */
+static ssize_t store_filter(struct device *device,
+			    struct device_attribute *attr,
+			    const char *buf,
+			    size_t count)
+{
+	struct rc_dev *dev = to_rc_dev(device);
+	struct rc_filter_attribute *fattr = to_rc_filter_attr(attr);
+	struct rc_scancode_filter local_filter, *filter;
+	int ret;
+	unsigned long val;
+
+	/* Device is being removed */
+	if (!dev)
+		return -EINVAL;
+
+	ret = kstrtoul(buf, 0, &val);
+	if (ret < 0)
+		return ret;
+
+	/* Scancode filter not supported (but still accept 0) */
+	if (!dev->s_filter)
+		return val ? -EINVAL : count;
+
+	mutex_lock(&dev->lock);
+
+	/* Tell the driver about the new filter */
+	filter = &dev->scancode_filters[fattr->type];
+	local_filter = *filter;
+	if (fattr->mask)
+		local_filter.mask = val;
+	else
+		local_filter.data = val;
+	ret = dev->s_filter(dev, fattr->type, &local_filter);
+	if (ret < 0)
+		goto unlock;
+
+	/* Success, commit the new filter */
+	*filter = local_filter;
+
+unlock:
+	mutex_unlock(&dev->lock);
+	return count;
+}
+
 static void rc_dev_release(struct device *device)
 {
 }
@@ -956,9 +1111,21 @@ static int rc_dev_uevent(struct device *device, struct kobj_uevent_env *env)
  */
 static DEVICE_ATTR(protocols, S_IRUGO | S_IWUSR,
 		   show_protocols, store_protocols);
+static RC_FILTER_ATTR(filter, S_IRUGO|S_IWUSR,
+		      show_filter, store_filter, RC_FILTER_NORMAL, false);
+static RC_FILTER_ATTR(filter_mask, S_IRUGO|S_IWUSR,
+		      show_filter, store_filter, RC_FILTER_NORMAL, true);
+static RC_FILTER_ATTR(wakeup_filter, S_IRUGO|S_IWUSR,
+		      show_filter, store_filter, RC_FILTER_WAKEUP, false);
+static RC_FILTER_ATTR(wakeup_filter_mask, S_IRUGO|S_IWUSR,
+		      show_filter, store_filter, RC_FILTER_WAKEUP, true);
 
 static struct attribute *rc_dev_attrs[] = {
 	&dev_attr_protocols.attr,
+	&dev_attr_filter.attr.attr,
+	&dev_attr_filter_mask.attr.attr,
+	&dev_attr_wakeup_filter.attr.attr,
+	&dev_attr_wakeup_filter_mask.attr.attr,
 	NULL,
 };
 
@@ -1073,7 +1240,14 @@ int rc_register_device(struct rc_dev *dev)
 	memcpy(&dev->input_dev->id, &dev->input_id, sizeof(dev->input_id));
 	dev->input_dev->phys = dev->input_phys;
 	dev->input_dev->name = dev->input_name;
+
+	/* input_register_device can call ir_open, so unlock mutex here */
+	mutex_unlock(&dev->lock);
+
 	rc = input_register_device(dev->input_dev);
+
+	mutex_lock(&dev->lock);
+
 	if (rc)
 		goto out_table;
 
