@@ -84,8 +84,10 @@ static const struct of_device_id sdhci_stb_dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, sdhci_stb_dt_match);
 
-struct sdhci_stb_slot * sdhci_stb_probe_slot( struct platform_device *pdev, 
-		struct sdhci_stb_chip *chip, void __iomem *ioaddr, int irq, int slot_num )
+struct sdhci_stb_slot *sdhci_stb_probe_slot(struct platform_device *pdev,
+					    struct sdhci_stb_chip *chip,
+					    void __iomem *ioaddr,
+					    int irq, int slot_num)
 {
 	struct sdhci_stb_slot *slot;
 	struct sdhci_host *host;
@@ -210,9 +212,14 @@ static int sdhci_stb_probe(struct platform_device *pdev)
 	chip->pdev = pdev;
 	chip->ioaddr = ioaddr;
 	chip->quirks = SDHCI_QUIRK_BROKEN_TIMEOUT_VAL;
+	chip->quirks |= SDHCI_QUIRK_BROKEN_ADMA_ZEROLEN_DESC;
+	chip->quirks |= SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC;
+	chip->quirks |= SDHCI_QUIRK_FORCE_BLK_SZ_2048;;
+
 #ifdef CONFIG_MMC_SDHCI_NX_SDIOMC_SD1_BIT_ALWAYS
 	chip->quirks |= SDHCI_QUIRK_FORCE_1_BIT_DATA;
 #endif
+
 #ifdef CONFIG_MMC_SDHCI_NX_DUALSD
 	chip->quirks |=  SDHCI_QUIRK_NO_CARD_NO_RESET;
 
