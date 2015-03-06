@@ -1,0 +1,12 @@
+#
+# Kronos Machine configuration file
+#
+
+if ARCH_KRONOS
+menu "Kronos Implementation"
+
+config MACH_KRONOS
+	bool
+
+endmenu
+endif 

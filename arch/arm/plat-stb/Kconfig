@@ -29,6 +29,24 @@ config ARCH_APOLLO
 	help
 	  Supports for Entropic STB Apollo SoC Family 
 
+config ARCH_KRONOS
+	bool "Entropic Kronos with Device Tree"
+	select MACH_KRONOS
+	select ARM_GIC
+	select CPU_V7
+	select HAVE_SMP
+	select ARCH_HAS_BARRIERS
+	select MIGHT_HAVE_CACHE_L2X0
+	select USE_OF
+	select IP3106
+	select SERIAL_IP3106_CONSOLE
+	select HAVE_ARM_SCU if SMP
+	select HAVE_ARM_TWD if LOCAL_TIMERS
+	select ARM_GLOBAL_TIMER
+
+	help
+	  Supports for Entropic STB Kronos SoC Family 
+
 endchoice
 
 config DEBUG_STB_UART
@@ -70,5 +88,6 @@ config STB_EARLY_UART4
 endchoice
 
 source "arch/arm/mach-apollo/Kconfig"
+source "arch/arm/mach-kronos/Kconfig"
 
 endif
