@@ -29,20 +29,93 @@
 #include "stmmac.h"
 
 #ifdef CONFIG_OF
+
+/* This function validates the number of Multicast filtering bins specified
+ * by the configuration through the device tree. The Synopsys GMAC supports
+ * 64 bins, 128 bins, or 256 bins. "bins" refer to the division of CRC
+ * number space. 64 bins correspond to 6 bits of the CRC, 128 corresponds
+ * to 7 bits, and 256 refers to 8 bits of the CRC. Any other setting is
+ * invalid and will cause the filtering algorithm to use Multicast
+ * promiscuous mode.
+ */
+static int dwmac1000_validate_mcast_bins(int mcast_bins)
+{
+	int x = mcast_bins;
+
+	switch (x) {
+	case HASH_TABLE_SIZE:
+	case 128:
+	case 256:
+		break;
+	default:
+		x = 0;
+		pr_info("Hash table entries set to unexpected value %d",
+			mcast_bins);
+		break;
+	}
+	return x;
+}
+
+/* This function validates the number of Unicast address entries supported
+ * by a particular Synopsys 10/100/1000 controller. The Synopsys controller
+ * supports 1, 32, 64, or 128 Unicast filter entries for it's Unicast filter
+ * logic. This function validates a valid, supported configuration is
+ * selected, and defaults to 1 Unicast address if an unsupported
+ * configuration is selected.
+ */
+static int dwmac1000_validate_ucast_entries(int ucast_entries)
+{
+	int x = ucast_entries;
+
+	switch (x) {
+	case 1:
+	case 32:
+	case 64:
+	case 128:
+		break;
+	default:
+		x = 1;
+		pr_info("Unicast table entries set to unexpected value %d\n",
+			ucast_entries);
+		break;
+	}
+	return x;
+}
+
 static int stmmac_probe_config_dt(struct platform_device *pdev,
 				  struct plat_stmmacenet_data *plat,
 				  const char **mac)
 {
 	struct device_node *np = pdev->dev.of_node;
+	struct stmmac_dma_cfg *dma_cfg;
+	u32 clk_csr;
 
 	if (!np)
 		return -ENODEV;
 
 	*mac = of_get_mac_address(np);
-	plat->interface = of_get_phy_mode(np);
+
+	if (plat->interface == PHY_INTERFACE_MODE_NA)
+		plat->interface = of_get_phy_mode(np);
+
 	plat->mdio_bus_data = devm_kzalloc(&pdev->dev,
 					   sizeof(struct stmmac_mdio_bus_data),
 					   GFP_KERNEL);
+
+	/* Get max speed of operation from device tree */
+	if (of_property_read_u32(np, "max-speed", &plat->max_speed))
+		plat->max_speed = -1;
+
+	plat->bus_id = of_alias_get_id(np, "ethernet");
+	if (plat->bus_id < 0)
+		plat->bus_id = 0;
+
+	of_property_read_u32(np, "snps,phy-addr", &plat->phy_addr);
+
+	/* Set the maxmtu to a default of JUMBO_LEN in case the
+	 * parameter is not present in the device tree.
+	 */
+	plat->maxmtu = JUMBO_LEN;
 
 	/*
 	 * Currently only the properties needed on SPEAr600
@@ -52,8 +125,59 @@ static int stmmac_probe_config_dt(struct platform_device *pdev,
 	if (of_device_is_compatible(np, "st,spear600-gmac") ||
 		of_device_is_compatible(np, "snps,dwmac-3.70a") ||
 		of_device_is_compatible(np, "snps,dwmac")) {
+		/* Note that the max-frame-size parameter as defined in the
+		 * ePAPR v1.1 spec is defined as max-frame-size, it's
+		 * actually used as the IEEE definition of MAC Client
+		 * data, or MTU. The ePAPR specification is confusing as
+		 * the definition is max-frame-size, but usage examples
+		 * are clearly MTUs
+		 */
+		of_property_read_u32(np, "max-frame-size", &plat->maxmtu);
+		of_property_read_u32(np, "snps,multicast-filter-bins",
+				     &plat->multicast_filter_bins);
+		of_property_read_u32(np, "snps,perfect-filter-entries",
+				     &plat->unicast_filter_entries);
+		plat->unicast_filter_entries = dwmac1000_validate_ucast_entries(
+					       plat->unicast_filter_entries);
+		plat->multicast_filter_bins = dwmac1000_validate_mcast_bins(
+					      plat->multicast_filter_bins);
 		plat->has_gmac = 1;
 		plat->pmt = 1;
+	}
+
+	if (of_property_read_u32(np, "clk_csr", &clk_csr) == 0) {
+		if (!clk_csr || clk_csr > STMMAC_CSR_250_300M) {
+			dev_err(&pdev->dev,
+			    "Unsupported CLK_CSR value: %u\n", clk_csr);
+			return -EINVAL;
+		}
+		plat->clk_csr = clk_csr;
+	}
+
+	if (of_device_is_compatible(np, "snps,dwmac-3.610") ||
+		of_device_is_compatible(np, "snps,dwmac-3.710")) {
+		plat->enh_desc = 1;
+		plat->bugged_jumbo = 1;
+		plat->force_sf_dma_mode = 1;
+	}
+
+	if (of_find_property(np, "snps,pbl", NULL)) {
+		dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*dma_cfg),
+				       GFP_KERNEL);
+		if (!dma_cfg)
+			return -ENOMEM;
+		plat->dma_cfg = dma_cfg;
+		of_property_read_u32(np, "snps,pbl", &dma_cfg->pbl);
+		dma_cfg->fixed_burst =
+			of_property_read_bool(np, "snps,fixed-burst");
+		dma_cfg->mixed_burst =
+			of_property_read_bool(np, "snps,mixed-burst");
+
+		plat->force_thresh_dma_mode = of_property_read_bool(np, "snps,force_thresh_dma_mode");
+		if (plat->force_thresh_dma_mode) {
+			plat->force_sf_dma_mode = 0;
+			pr_warn("force_sf_dma_mode is ignored if force_thresh_dma_mode is set.");
+		}
 	}
 
 	return 0;
@@ -92,22 +216,29 @@ static int stmmac_pltfr_probe(struct platform_device *pdev)
 	if (IS_ERR(addr))
 		return PTR_ERR(addr);
 
-	if (pdev->dev.of_node) {
-		plat_dat = devm_kzalloc(&pdev->dev,
-					sizeof(struct plat_stmmacenet_data),
-					GFP_KERNEL);
-		if (!plat_dat) {
-			pr_err("%s: ERROR: no memory", __func__);
-			return  -ENOMEM;
-		}
+	plat_dat = pdev->dev.platform_data;
 
+	if (!plat_dat)
+		plat_dat = devm_kzalloc(&pdev->dev,
+				sizeof(struct plat_stmmacenet_data),
+				GFP_KERNEL);
+	if (!plat_dat) {
+		pr_err("%s: ERROR: no memory", __func__);
+		return  -ENOMEM;
+	}
+
+	/* Set default value for multicast hash bins */
+	plat_dat->multicast_filter_bins = HASH_TABLE_SIZE;
+
+	/* Set default value for unicast filter entries */
+	plat_dat->unicast_filter_entries = 1;
+
+	if (pdev->dev.of_node) {
 		ret = stmmac_probe_config_dt(pdev, plat_dat, &mac);
 		if (ret) {
 			pr_err("%s: main dt probe failed", __func__);
 			return ret;
 		}
-	} else {
-		plat_dat = pdev->dev.platform_data;
 	}
 
 	/* Custom initialisation (if needed)*/
@@ -230,7 +361,9 @@ static const struct dev_pm_ops stmmac_pltfr_pm_ops;
 
 static const struct of_device_id stmmac_dt_ids[] = {
 	{ .compatible = "st,spear600-gmac"},
+	{ .compatible = "snps,dwmac-3.610"},
 	{ .compatible = "snps,dwmac-3.70a"},
+	{ .compatible = "snps,dwmac-3.710"},
 	{ .compatible = "snps,dwmac"},
 	{ /* sentinel */ }
 };

@@ -56,7 +56,7 @@ static int stmmac_adjust_freq(struct ptp_clock_info *ptp, s32 ppb)
 
 	priv->hw->ptp->config_addend(priv->ioaddr, addend);
 
-	spin_unlock_irqrestore(&priv->lock, flags);
+	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
 	return 0;
 }
@@ -91,7 +91,7 @@ static int stmmac_adjust_time(struct ptp_clock_info *ptp, s64 delta)
 
 	priv->hw->ptp->adjust_systime(priv->ioaddr, sec, nsec, neg_adj);
 
-	spin_unlock_irqrestore(&priv->lock, flags);
+	spin_unlock_irqrestore(&priv->ptp_lock, flags);
 
 	return 0;
 }
@@ -160,7 +160,7 @@ static int stmmac_enable(struct ptp_clock_info *ptp,
 static struct ptp_clock_info stmmac_ptp_clock_ops = {
 	.owner = THIS_MODULE,
 	.name = "stmmac_ptp_clock",
-	.max_adj = 62500000,
+	.max_adj = STMMAC_SYSCLOCK,
 	.n_alarm = 0,
 	.n_ext_ts = 0,
 	.n_per_out = 0,
