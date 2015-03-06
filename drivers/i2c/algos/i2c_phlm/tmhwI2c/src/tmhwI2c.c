@@ -3571,7 +3571,7 @@ i2cTransceiveData (
 				(UInt32) uiCounter);
 
 		gI2cData[i2cUnit].counter = gI2cData[i2cUnit].counter - uiCounter;
-		printk("DMA Control is %d\n",dmaControl);
+		// printk("DMA Control is %d\n",dmaControl);
 		i2cSetDmaControl(i2cUnit, dmaControl);
 
 #endif /* LINUX_BUILD */
