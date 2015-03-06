@@ -28,6 +28,12 @@ config MARVELL_PHY
 	tristate "Drivers for Marvell PHYs"
 	---help---
 	  Currently has a driver for the 88E1011S
+
+config MYSTI110E_PHY
+	tristate "Drivers for Entropic SOCs with MYSTI110E PHYs"
+	depends on PLAT_STB
+	---help---
+	  Currently has a driver for all the SOC series.
 	
 config DAVICOM_PHY
 	tristate "Drivers for Davicom PHYs"
