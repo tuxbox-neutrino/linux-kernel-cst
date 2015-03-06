@@ -168,4 +168,6 @@ source "drivers/reset/Kconfig"
 
 source "drivers/gcs_dmac/Kconfig"
 
+source "drivers/phy/Kconfig"
+
 endmenu
