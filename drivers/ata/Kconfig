@@ -106,6 +106,15 @@ config SATA_FSL
 
 	  If unsure, say N.
 
+config AHCI_STB
+	tristate "Entropic SATA support"
+	depends on SATA_AHCI_PLATFORM && PLAT_STB
+	help
+	  This option enables support for Entropic STB SATA controller.
+	  It can be found on PNX84xx, EN75xx and EN 73XX.
+
+	  If unsure, say N.
+
 config SATA_INIC162X
 	tristate "Initio 162x SATA support (Very Experimental)"
 	depends on PCI
