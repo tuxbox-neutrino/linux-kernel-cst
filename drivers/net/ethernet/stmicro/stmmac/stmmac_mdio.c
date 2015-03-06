@@ -167,10 +167,13 @@ int stmmac_mdio_register(struct net_device *ndev)
 	if (new_bus == NULL)
 		return -ENOMEM;
 
-	if (mdio_bus_data->irqs)
+	if (mdio_bus_data->irqs) {
 		irqlist = mdio_bus_data->irqs;
-	else
+	} else {
+		for (addr = 0; addr < PHY_MAX_ADDR; addr++)
+			priv->mii_irq[addr] = PHY_POLL;
 		irqlist = priv->mii_irq;
+	}
 
 	new_bus->name = "stmmac";
 	new_bus->read = &stmmac_mdio_read;
@@ -193,7 +196,7 @@ int stmmac_mdio_register(struct net_device *ndev)
 		struct phy_device *phydev = new_bus->phy_map[addr];
 		if (phydev) {
 			int act = 0;
-			char irq_num[4];
+			char irq_num[6];
 			char *irq_str;
 
 			/*
@@ -223,7 +226,7 @@ int stmmac_mdio_register(struct net_device *ndev)
 				irq_str = "IGNORE";
 				break;
 			default:
-				sprintf(irq_num, "%d", phydev->irq);
+				snprintf(irq_num, sizeof(irq_num), "%d", phydev->irq);
 				irq_str = irq_num;
 				break;
 			}
