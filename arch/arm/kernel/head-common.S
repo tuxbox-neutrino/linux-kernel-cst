@@ -61,10 +61,10 @@ __vet_atags:
 	cmp	r5, r6
 	bne	1f
 
-2:	mov	pc, lr				@ atag/dtb pointer is ok
+2:	ret	lr				@ atag/dtb pointer is ok
 
 1:	mov	r2, #0
-	mov	pc, lr
+	ret	lr
 ENDPROC(__vet_atags)
 
 /*
