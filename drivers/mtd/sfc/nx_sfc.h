@@ -21,8 +21,8 @@
 
 #include <mach/soc.h>
 
-   #define SFC_DCSN_BASE_REG        (SOC_MMIO_GCS_BASE + 0x14)
-   #define NX_DMA_SFC_BASE_ADDR_REG (SOC_MMIO_GCS_BASE + 0x40)
+   #define SFC_DCSN_BASE_REG        (SOC_MMIO_GCS_BASE + 0x6014)
+   #define NX_DMA_SFC_BASE_ADDR_REG (SOC_MMIO_GCS_BASE + 0x6040)
 
    #define IPBGCSFLSHNTWK_BASE 0x0
    #define IPBGCSFLSHNTWK_SFC_SFC_VERSION_ID_REG  (0x00)
