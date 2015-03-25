@@ -832,8 +832,7 @@ int genphy_read_status(struct phy_device *phydev)
 	int lpa;
 	int lpagb = 0;
 
-	/* Update the link, but return if there
-	 * was an error */
+	/* Update the link, but return if there was an error */
 	err = genphy_update_link(phydev);
 	if (err)
 		return err;
@@ -874,7 +873,8 @@ int genphy_read_status(struct phy_device *phydev)
 
 		phydev->speed = SPEED_10;
 		phydev->duplex = DUPLEX_HALF;
-		phydev->pause = phydev->asym_pause = 0;
+		phydev->pause = 0;
+		phydev->asym_pause = 0;
 
 		if (lpagb & (LPA_1000FULL | LPA_1000HALF)) {
 			phydev->speed = SPEED_1000;
@@ -883,14 +883,14 @@ int genphy_read_status(struct phy_device *phydev)
 				phydev->duplex = DUPLEX_FULL;
 		} else if (lpa & (LPA_100FULL | LPA_100HALF)) {
 			phydev->speed = SPEED_100;
-			
+
 			if (lpa & LPA_100FULL)
 				phydev->duplex = DUPLEX_FULL;
 		} else
 			if (lpa & LPA_10FULL)
 				phydev->duplex = DUPLEX_FULL;
 
-		if (phydev->duplex == DUPLEX_FULL){
+		if (phydev->duplex == DUPLEX_FULL) {
 			phydev->pause = lpa & LPA_PAUSE_CAP ? 1 : 0;
 			phydev->asym_pause = lpa & LPA_PAUSE_ASYM ? 1 : 0;
 		}
