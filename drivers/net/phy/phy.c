@@ -1023,6 +1023,7 @@ static void phy_write_mmd_indirect(struct mii_bus *bus, int prtad, int devad,
 /**
  * phy_init_eee - init and check the EEE feature
  * @phydev: target phy_device struct
+ * @mac_has_eee: MAC supports EEE
  * @clk_stop_enable: PHY may stop the clock during LPI
  *
  * Description: it checks if the Energy-Efficient Ethernet (EEE)
@@ -1030,7 +1031,7 @@ static void phy_write_mmd_indirect(struct mii_bus *bus, int prtad, int devad,
  * and it programs the MMD register 3.0 setting the "Clock stop enable"
  * bit if required.
  */
-int phy_init_eee(struct phy_device *phydev, bool clk_stop_enable)
+int phy_init_eee(struct phy_device *phydev, bool mac_has_eee, bool clk_stop_enable)
 {
 	/* According to 802.3az,the EEE is supported only in full duplex-mode.
 	 * Also EEE feature is active when core is operating with MII, GMII
@@ -1073,6 +1074,18 @@ int phy_init_eee(struct phy_device *phydev, bool clk_stop_enable)
 						MDIO_MMD_AN, phydev->addr);
 		if (eee_adv <= 0)
 			goto eee_exit_err;
+
+		/* Check if the MAC supports EEE and if not,
+		 * disable EEE in the PHY
+		 */
+		if (!mac_has_eee) {
+			pr_warn("%s: Disabling EEE\n", dev_name(&phydev->dev));
+			phy_write_mmd_indirect(phydev->bus,
+							MDIO_AN_EEE_ADV,
+							MDIO_MMD_AN,
+							phydev->addr, 0);
+			goto eee_exit_err;
+		}
 
 		adv = mmd_eee_adv_to_ethtool_adv_t(eee_adv);
 		lp = mmd_eee_adv_to_ethtool_adv_t(eee_lp);

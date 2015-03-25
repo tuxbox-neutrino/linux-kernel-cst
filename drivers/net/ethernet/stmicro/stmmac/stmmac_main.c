@@ -279,6 +279,8 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 	char *phy_bus_name = priv->plat->phy_bus_name;
 	unsigned long flags;
 	bool ret = false;
+	bool supports_eee = (priv->dma_cap.eee ? true : false);
+	int status;
 
 	/* Using PCS we cannot dial with the phy registers at this stage
 	 * so we do not support extra feature like EEE.
@@ -291,12 +293,13 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 	if (phy_bus_name && (!strcmp(phy_bus_name, "fixed")))
 		goto out;
 
-	/* MAC core supports the EEE feature. */
-	if (priv->dma_cap.eee) {
-		int tx_lpi_timer = priv->tx_lpi_timer;
+	/* Check if the PHY supports EEE */
+	status = phy_init_eee(priv->phydev, supports_eee, 1);
 
-		/* Check if the PHY supports EEE */
-		if (phy_init_eee(priv->phydev, 1)) {
+	/* MAC core supports the EEE feature. */
+	if (supports_eee) {
+		int tx_lpi_timer = priv->tx_lpi_timer;
+		if (status) {
 			/* To manage at run-time if the EEE cannot be supported
 			 * anymore (for example becasue the lp caps have been
 			 * changed).
@@ -334,6 +337,9 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 		spin_unlock_irqrestore(&priv->lock, flags);
 
 		pr_debug("stmmac: Energy-Efficient Ethernet initialized\n");
+	} else {
+		/* EEE is supported from GMAC v.3.60a */
+		pr_debug("stmmac: Energy-Efficient Ethernet not supported\n");
 	}
 out:
 	return ret;
