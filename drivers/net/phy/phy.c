@@ -177,8 +177,7 @@ static inline int phy_find_setting(int speed, int duplex)
 	int idx = 0;
 
 	while (idx < ARRAY_SIZE(settings) &&
-			(settings[idx].speed != speed ||
-			settings[idx].duplex != duplex))
+	       (settings[idx].speed != speed || settings[idx].duplex != duplex))
 		idx++;
 
 	return idx < MAX_NUM_SETTINGS ? idx : MAX_NUM_SETTINGS - 1;
