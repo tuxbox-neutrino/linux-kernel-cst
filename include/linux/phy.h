@@ -572,6 +572,12 @@ int phy_ethtool_get_eee(struct phy_device *phydev, struct ethtool_eee *data);
 int phy_ethtool_set_wol(struct phy_device *phydev, struct ethtool_wolinfo *wol);
 void phy_ethtool_get_wol(struct phy_device *phydev, struct ethtool_wolinfo *wol);
 
+void phy_write_mmd_indirect(struct mii_bus *bus, int prtad, int devad,
+			    int addr, u32 data);
+int phy_read_mmd_indirect(struct mii_bus *bus, int prtad, int devad,
+			  int addr);
+
+
 int __init mdio_bus_init(void);
 void mdio_bus_exit(void);
 
