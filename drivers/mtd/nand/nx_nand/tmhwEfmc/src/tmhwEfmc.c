@@ -297,13 +297,13 @@ tmhwEfmc_SetFlashConfig(
    regs =  (UInt32) ( TMHW_EFMC_GET_BASE( efmcUnitID) + TMVH_EFMC_DEV_TIMING1_OFFSET +
       ( deviceNum * TMVH_EFMC_DEV_TIMING1_DIFF ) );
 
-   regVal = (UInt32) (pFlashConfig->devTiming.tRenHigh & TMVH_EFMC_DEV_TIMING1_TRH_MSK );
-   regVal |= (UInt32) (pFlashConfig->devTiming.tRdDelay);
+   regVal = ((((UInt32)(pFlashConfig->devTiming.tRdDelay)) << TMVH_EFMC_DEV_TIMING1_TDRD_POS ) &  TMVH_EFMC_DEV_TIMING1_TDRD_MSK );
    /* please note that, 0x00 meaning 16 cycles, so when masking, if given is 16,then it will turn to be 0x00 which is correct */
    regVal |= ((((UInt32)(pFlashConfig->devTiming.tWaitForBusy)) << TMVH_EFMC_DEV_TIMING1_TWB_POS ) & TMVH_EFMC_DEV_TIMING1_TWB_MSK );
    regVal |= ((((UInt32)(pFlashConfig->devTiming.tWenWidth)) << TMVH_EFMC_DEV_TIMING1_TWP_POS ) & TMVH_EFMC_DEV_TIMING1_TWP_MSK );
    regVal |= ((((UInt32)(pFlashConfig->devTiming.tWenHigh)) << TMVH_EFMC_DEV_TIMING1_TWH_POS ) & TMVH_EFMC_DEV_TIMING1_TWH_MSK );
    regVal |= ((((UInt32)(pFlashConfig->devTiming.tRenWidth)) << TMVH_EFMC_DEV_TIMING1_TRP_POS ) & TMVH_EFMC_DEV_TIMING1_TRP_MSK );
+   regVal |= ((((UInt32)(pFlashConfig->devTiming.tRenHigh)) << TMVH_EFMC_DEV_TIMING1_TRH_POS ) &  TMVH_EFMC_DEV_TIMING1_TRH_MSK );
 
    TMVH_GEN_WRITE( regs, regVal );
    return TM_OK;
