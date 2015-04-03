@@ -15,6 +15,7 @@
  */
 #include <linux/phy.h>
 #include <linux/module.h>
+#include <linux/mdio.h>
 
 #define RTL821x_PHYSR		0x11
 #define RTL821x_PHYSR_DUPLEX	0x2000
@@ -64,6 +65,17 @@ static int rtl8211e_config_intr(struct phy_device *phydev)
 	return err;
 }
 
+static int rtl8211e_config_init(struct phy_device *phydev)
+{
+	/* we want to disable eee by default, as not all MACs support EEE */
+	phy_write_mmd_indirect(phydev->bus,
+			       MDIO_AN_EEE_ADV,
+			       MDIO_MMD_AN,
+			       phydev->addr, 0);
+
+	return 0;
+}
+
 /* RTL8211B */
 static struct phy_driver rtl8211b_driver = {
 	.phy_id		= 0x001cc912,
@@ -86,6 +98,7 @@ static struct phy_driver rtl8211e_driver = {
 	.features	= PHY_GBIT_FEATURES,
 	.flags		= PHY_HAS_INTERRUPT,
 	.config_aneg	= &genphy_config_aneg,
+	.config_init	= &rtl8211e_config_init,
 	.read_status	= &genphy_read_status,
 	.ack_interrupt	= &rtl821x_ack_interrupt,
 	.config_intr	= &rtl8211e_config_intr,
