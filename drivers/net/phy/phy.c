@@ -1072,20 +1072,27 @@ int phy_init_eee(struct phy_device *phydev, bool mac_has_eee, bool clk_stop_enab
 		if (eee_lp <= 0)
 			goto eee_exit_err;
 
+
 		eee_adv = phy_read_mmd_indirect(phydev->bus, MDIO_AN_EEE_ADV,
 						MDIO_MMD_AN, phydev->addr);
-		if (eee_adv <= 0)
+		if (eee_adv < 0)
 			goto eee_exit_err;
 
 		/* Check if the MAC supports EEE and if not,
 		 * disable EEE in the PHY
 		 */
-		if (!mac_has_eee) {
-			pr_warn("%s: Disabling EEE\n", dev_name(&phydev->dev));
-			phy_write_mmd_indirect(phydev->bus,
-							MDIO_AN_EEE_ADV,
-							MDIO_MMD_AN,
-							phydev->addr, 0);
+		if (mac_has_eee) {
+			if (!eee_adv) {
+				pr_info("%s: Enabling EEE\n",
+				        dev_name(&phydev->dev));
+				phy_write_mmd_indirect(phydev->bus,
+						       MDIO_AN_EEE_ADV,
+						       MDIO_MMD_AN,
+						       phydev->addr,
+						       MDIO_AN_EEE_ADV_100TX |
+						       MDIO_AN_EEE_ADV_1000T);
+			}
+		} else {
 			goto eee_exit_err;
 		}
 
