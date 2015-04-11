@@ -28,6 +28,8 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 
+#include <linux/platform_data/mtd-nx_nand.h>
+
 #include "tmhwEfmc.h"
 #include "tmhwEfmc_Cfg.h"
 #include "tmhwEfmc_Vhip.h"
@@ -239,6 +241,7 @@ static struct nand_bbt_descr nx_bbt_mirror = {
  * NAND control structure
  */
 struct nx_nand_ctrl *nx_nc = NULL;
+EXPORT_SYMBOL(nx_nc);
 
 
 /**
@@ -2259,6 +2262,52 @@ static irqreturn_t nx_nand_ctrl_isr(int irq_no ATTRIBUTE_UNUSED, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+#ifdef CONFIG_OF
+static const struct of_device_id nx_nand_dt_match[] = {
+	{ .compatible = "entr,stb-nand" },
+	{},
+};
+MODULE_DEVICE_TABLE(of, nx_nand_dt_match);
+
+#if (defined (CONFIG_PLAT_STB) && !defined (CONFIG_ARCH_APOLLO))
+static struct nx_nand_pdata
+	*nx_nand_get_pdata(struct platform_device *pdev)
+{
+	if (!pdev->dev.platform_data && pdev->dev.of_node) {
+		struct nx_nand_pdata *pdata;
+		u32 prop;
+
+		pdata =  devm_kzalloc(&pdev->dev,
+				sizeof(struct nx_nand_pdata),
+				GFP_KERNEL);
+		pdev->dev.platform_data = pdata;
+		if (!pdata)
+			return NULL;
+		if (!of_property_read_u32(pdev->dev.of_node,
+			"entr,stb-nand-dev_timing0", &prop))
+			pdata->dev_timing0 = prop;
+		else /* Maximum */
+			pdata->dev_timing0 = 0x0FFFFFFF;
+		if (!of_property_read_u32(pdev->dev.of_node,
+			"entr,stb-nand-dev_timing1", &prop))
+			pdata->dev_timing1 = prop;
+		else /* Maximum */
+			pdata->dev_timing1 = 0x003FFFFF;
+	}
+
+	return pdev->dev.platform_data;
+}
+#endif
+#else
+#if (defined (CONFIG_PLAT_STB) && !defined (CONFIG_ARCH_APOLLO))
+static struct nx_nand_pdata
+	*nx_nand_get_pdata(struct platform_device *pdev)
+{
+	return pdev->dev.platform_data;
+}
+#endif
+#endif
+
 /**
  * nx_nand_probe - Module probe function
  * @pdev: Device structure
@@ -2267,16 +2316,17 @@ static irqreturn_t nx_nand_ctrl_isr(int irq_no ATTRIBUTE_UNUSED, void *dev_id)
  */
 static int nx_nand_probe(struct platform_device *pdev)
 {
-	int							ret=0;
-	struct resource			*res1, *res2;
-	struct nand_chip			*chip;
-	struct mtd_info			*mtd;
+	int			ret=0;
+	struct resource		*res1, *res2;
+	struct nand_chip	*chip;
+	struct mtd_info		*mtd;
 	tmhwEfmc_Capabilities_t pcaps;
 	tmhwEfmc_FlashConfig_t	pconfig;
 #if (defined (CONFIG_PLAT_STB) && !defined (CONFIG_ARCH_APOLLO))
-	tmhwEfmc_ModeCtrl_t		pModeCtrl;
+	struct nx_nand_pdata	*pdata;
+	tmhwEfmc_ModeCtrl_t	pModeCtrl;
 	tmhwEfmc_FlashConfig_t	FlashConfig;
-	tmhwEfmc_OobInfo_t		pOobInfo;
+	tmhwEfmc_OobInfo_t	pOobInfo;
 #endif
 
 	/* Allocate memory for nand control structure */
@@ -2501,7 +2551,28 @@ static int nx_nand_probe(struct platform_device *pdev)
 			BUG();
 	}
 	FlashConfig.erasedPageThres = FlashConfig.eccLevel/2; /* FIXME */
-	memset(&FlashConfig.devTiming, 0xFF, sizeof(FlashConfig.devTiming));
+
+	pdata = nx_nand_get_pdata(pdev);
+	if (pdata) {
+		ptmhwEfmc_TimingConfig_t pDevTiming = &FlashConfig.devTiming;
+
+		pDevTiming->tAleHold  = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TALH_MSK ) >> TMVH_EFMC_DEV_TIMING0_TALH_POS );
+		pDevTiming->tAleSetup = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TALS_MSK ) >> TMVH_EFMC_DEV_TIMING0_TALS_POS );
+		pDevTiming->tCleHold  = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TCLH_MSK ) >> TMVH_EFMC_DEV_TIMING0_TCLH_POS );
+		pDevTiming->tCleSetup = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TCLS_MSK ) >> TMVH_EFMC_DEV_TIMING0_TCLS_POS );
+		pDevTiming->tCenHold  = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TCPH_MSK ) >> TMVH_EFMC_DEV_TIMING0_TCPH_POS );
+		pDevTiming->tCenSetup = ( ( pdata->dev_timing0 & TMVH_EFMC_DEV_TIMING0_TCPS_MSK ) >> TMVH_EFMC_DEV_TIMING0_TCPS_POS );
+
+		pDevTiming->tRdDelay     = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TDRD_MSK ) >> TMVH_EFMC_DEV_TIMING1_TDRD_POS );
+		pDevTiming->tWaitForBusy = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TWB_MSK ) >> TMVH_EFMC_DEV_TIMING1_TWB_POS );
+		pDevTiming->tWenWidth    = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TWP_MSK ) >> TMVH_EFMC_DEV_TIMING1_TWP_POS );
+		pDevTiming->tWenHigh     = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TWH_MSK ) >> TMVH_EFMC_DEV_TIMING1_TWH_POS );
+		pDevTiming->tRenWidth    = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TRP_MSK ) >> TMVH_EFMC_DEV_TIMING1_TRP_POS );
+		pDevTiming->tRenHigh     = ( ( pdata->dev_timing1 & TMVH_EFMC_DEV_TIMING1_TRH_MSK ) >> TMVH_EFMC_DEV_TIMING1_TRH_POS );
+	} else {
+		memset(&FlashConfig.devTiming, 0xFF, sizeof(FlashConfig.devTiming));
+	}
+
 	tmhwEfmc_SetFlashConfig(nx_nc->unitid,nx_nc->slotid, &FlashConfig);
 	nx_nc->flash_config = FlashConfig;
 
@@ -2639,7 +2710,7 @@ out_free1:
  */
 static int nx_nand_remove(struct platform_device *pdev)
 {
-struct nx_nand_ctrl *nc = dev_get_drvdata(&pdev->dev);
+	struct nx_nand_ctrl *nc = dev_get_drvdata(&pdev->dev);
 
 	/* Release resources */
 	nand_release(&nc->mtd);
@@ -2700,19 +2771,12 @@ static int nx_nand_resume(struct platform_device *pdev)
 
 #endif
 
-#ifdef CONFIG_OF
-static const struct of_device_id nx_nand_dt_match[] = {
-	{ .compatible = "entr,stb-nand" },
-	{},
-};
-MODULE_DEVICE_TABLE(of, nx_nand_dt_match);
-#endif
 
 /**
 * NAND device registration
 */
 static struct platform_driver nx_nand_driver = {
-	.probe		= nx_nand_probe,
+	//.probe		= nx_nand_probe,
 	.remove		= nx_nand_remove,
 	.suspend 	= nx_nand_suspend,
 	.resume		= nx_nand_resume,
@@ -2723,31 +2787,8 @@ static struct platform_driver nx_nand_driver = {
 	},
 };
 
-/**
- * nx_nand_init - Module initialisation function
- *
- * Register the NAND driver
- */
-static int __init nx_nand_init(void)
-{
-	return platform_driver_register(&nx_nand_driver);
-}
-module_init(nx_nand_init);
-
-#ifdef MODULE
-/**
- * nx_nand_exit - Module exit function
- *
- * Unregister the NAND driver
- */
-static void __exit nx_nand_exit(void)
-{
-	platform_driver_unregister(&nx_nand_driver);
-}
-module_exit(nx_nand_exit);
-#endif
-
-EXPORT_SYMBOL(nx_nc);
+module_platform_driver_probe(nx_nand_driver, nx_nand_probe);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("NAND Flash driver for IP_2070 NAND controller");
+MODULE_ALIAS("platform:nx_2017");
