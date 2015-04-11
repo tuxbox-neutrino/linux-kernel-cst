@@ -1664,7 +1664,7 @@ tmhwEfmc_GetFlashConfig(
 
   TMVH_GEN_READ( regs, regVal );
 
-  pFlashConfig->devTiming.tRdDelay = (tmhwEfmc_RdyDelay_t) ( regVal & TMVH_EFMC_DEV_TIMING1_TDRD_MSK );
+  pFlashConfig->devTiming.tRdDelay = (UInt8) ( ( regVal & TMVH_EFMC_DEV_TIMING1_TDRD_MSK ) >> TMVH_EFMC_DEV_TIMING1_TDRD_POS );
   pFlashConfig->devTiming.tWaitForBusy = (UInt8) ( ( regVal & TMVH_EFMC_DEV_TIMING1_TWB_MSK ) >> TMVH_EFMC_DEV_TIMING1_TWB_POS );
 
   if( 0x00 == pFlashConfig->devTiming.tWaitForBusy )
