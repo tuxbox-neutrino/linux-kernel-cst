@@ -194,22 +194,22 @@ typedef enum tmhwEfmc_SubPageSize
 typedef enum tmhwEfmc_RdyDelay
 /*! This enum defines the data read delay timing in AXI/AHB clock cycles */
 {
-  tmhwEfmc_Cycles_0 =   0x00000000,   /*!< 0 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_0_H = 0x00400000, /*!< Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_1 =   0x00800000,   /*!< 1 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_1_H = 0x00C00000, /*!< 1 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_2 =   0x01000000,   /*!< 2 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_2_H = 0x01400000, /*!< 2 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_3 =   0x01800000,   /*!< 3 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_3_H = 0x01C00000, /*!< 3 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_4 =   0x02000000,   /*!< 4 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_4_H = 0x02400000, /*!< 4 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_5 =   0x02800000,  /*!< 5 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_5_H = 0x02C00000,/*!< 5 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_6 =   0x03000000,  /*!< 6 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_6_H = 0x03400000,/*!< 6 and Half AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_7 =   0x03800000,  /*!< 7 AXI/AHB clock cycles */
-  tmhwEfmc_Cycles_7_H = 0x03C00000 /*!< 7 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_0 =   0x00,   /*!< 0 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_0_H = 0x01, /*!< Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_1 =   0x02,   /*!< 1 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_1_H = 0x03, /*!< 1 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_2 =   0x04,   /*!< 2 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_2_H = 0x05, /*!< 2 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_3 =   0x06,   /*!< 3 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_3_H = 0x07, /*!< 3 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_4 =   0x08,   /*!< 4 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_4_H = 0x09, /*!< 4 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_5 =   0x0A,  /*!< 5 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_5_H = 0x0B,/*!< 5 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_6 =   0x0C,  /*!< 6 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_6_H = 0x0D,/*!< 6 and Half AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_7 =   0x0E,  /*!< 7 AXI/AHB clock cycles */
+  tmhwEfmc_Cycles_7_H = 0x0F /*!< 7 and Half AXI/AHB clock cycles */
 } tmhwEfmc_RdyDelay_t, *ptmhwEfmc_RdyDelay_t;
 
 typedef struct tmhwEfmc_ReadBusySignal
@@ -272,7 +272,8 @@ typedef struct tmhwEfmc_TimingConfig
   UInt8                   tAleSetup;    /*!< defines the ALE setup time, i.e. the number of AXI/AHB clock cycles between rising/falling edge of ALE and falling edge of WEn.  Range: 1-16 AXI/AHB clock cycles */
   UInt8                   tAleHold;     /*!< defines the ALE hold time, i.e. the number of AXI/AHB clock cycles between rising edge of WEn and falling edge of ALE.  Range: 1-16 AXI/AHB clock cycles  */
   UInt8                   tWaitForRdy;  /*!< defines the wait until ready time, i.e. the number of AXI/AHB clock cycles between rising edge of R/Bn and falling edge of REn. Range: 4-16 AXI/AHB clock cycles. */
-  tmhwEfmc_RdyDelay_t tRdDelay;     /*!< defines the data read delay, i.e. the number of AXI/AHB clock cycles divided by two between rising edge of REn and clocking of the read data. This delay can be used to compensate for IO pad delay. */
+  //tmhwEfmc_RdyDelay_t tRdDelay;     /*!< defines the data read delay, i.e. the number of AXI/AHB clock cycles divided by two between rising edge of REn and clocking of the read data. This delay can be used to compensate for IO pad delay. */
+  UInt8                   tRdDelay;  /*!< defines the data read delay, i.e. the number of AXI/AHB clock cycles divided by two between rising edge of REn and clocking of the read data. This delay can be used to compensate for IO pad delay. */
   UInt8                   tWaitForBusy; /*!< defines the wait until busy time, i.e. the number of AXI/AHB clock cycles between rising edge of WEn and falling edge of R/Bn. Range: 1-64 AXI/AHB cycles */
   UInt8                   tWenWidth;    /*!< defines the WEn pulse width, i.e. the number of AXI/AHB clock cycles [3] that WEn is asserted low. Range: 1-16 AXI/AHB clock cycles */
   UInt8                   tWenHigh;     /*!< defines the WEn high hold time, i.e. the number of AXI/AHB clock cycles [3] between rising and falling edge of WEn. Range: 1-16 AXI/AHB clock cycles */
