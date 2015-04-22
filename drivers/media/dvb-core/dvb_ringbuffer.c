@@ -298,3 +298,8 @@ EXPORT_SYMBOL(dvb_ringbuffer_flush_spinlock_wakeup);
 EXPORT_SYMBOL(dvb_ringbuffer_read_user);
 EXPORT_SYMBOL(dvb_ringbuffer_read);
 EXPORT_SYMBOL(dvb_ringbuffer_write);
+EXPORT_SYMBOL(dvb_ringbuffer_pkt_write);
+EXPORT_SYMBOL(dvb_ringbuffer_pkt_read_user);
+EXPORT_SYMBOL(dvb_ringbuffer_pkt_read);
+EXPORT_SYMBOL(dvb_ringbuffer_pkt_dispose);
+EXPORT_SYMBOL(dvb_ringbuffer_pkt_next);
