@@ -171,14 +171,22 @@ ssize_t nx_sfc_read_quad(struct nx_sfc_mtd *flash)
       writel(flash->cd.length,flash->mmio_base + IPBGCSFLSHNTWK_SFC_SFC_TX_RX_DATA_CNT_REG);
    }
 
-   writel( SFC_CSR_QUAD_READ, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_CSR_REG);
-   
+#ifdef CONFIG_MTD_NX_SFC_DMAC_EN
+   if(!(dma_from & 3))
+      writel(SFC_CSR_QUAD_READ_32_BIT, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_CSR_REG);
+   else if(!(dma_from & 1))
+      writel(SFC_CSR_QUAD_READ_16_BIT, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_CSR_REG);
+   else
+      writel(SFC_CSR_QUAD_READ_8_BIT, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_CSR_REG);
+
+   /* Program the Device Command Register with Quad read command */
+   writel(cmd, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_DEVICE_CMD_REG);
+   nx_sfc_map_copy_from(flash->cd.buffer, dma_from, flash->cd.length);
+#else 
+   writel(SFC_CSR_QUAD_READ_32_BIT, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_CSR_REG);
    /* Program the Device Command Register with Quad read command */
    writel(cmd, flash->mmio_base+IPBGCSFLSHNTWK_SFC_SFC_DEVICE_CMD_REG);
 
-#ifdef CONFIG_MTD_NX_SFC_DMAC_EN
-   nx_sfc_map_copy_from(flash->cd.buffer, dma_from, flash->cd.length);
-#else 
    for (cnt=0;cnt<flash->cd.length/4; cnt++)
    {
       buf_store=readl(buf_base);
@@ -1834,8 +1842,9 @@ static int nx_sfc_probe(struct platform_device *pdev)
    }
 
  #endif
-   
+
    nx_sfc_init(mmio_regs);
+
 #ifdef CONFIG_MTD_NX_SFC_DMAC_EN
    err = nx_sfc_dma_init(pdev);
    if (err)

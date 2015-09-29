@@ -424,7 +424,9 @@
 #define SFC_PROTOCOL_DELAY_32B_DIS  0x20000000
 
 #define SFC_CSR_READ                0x0000027
-#define SFC_CSR_QUAD_READ           0x000000e7
+#define SFC_CSR_QUAD_READ_8_BIT     0x000000c7
+#define SFC_CSR_QUAD_READ_16_BIT    0x000000d7
+#define SFC_CSR_QUAD_READ_32_BIT    0x000000e7
 #define SFC_CSR_WRITE               0x00420001
 #define SFC_CSR_ERASE               0x20001
 #define SFC_CSR_WREN                0x67
