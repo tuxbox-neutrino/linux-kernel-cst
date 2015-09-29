@@ -103,18 +103,26 @@ void nx_sfc_dma_start(
 {
    u32 control = 0;
    u32 config  = 0;
+   u32 src_width = DMA_SLAVE_WIDTH_8BIT;
+   u32 dst_width = DMA_SLAVE_WIDTH_8BIT;
 
    sfc_dma_done = false;
    sfc_dma_error = false;
 
-   if (src_addr%4)
+
+   if (!((src_addr | dst_addr | xfer_count) & 3))
    {
-      printk(KERN_INFO "nx_sfc_dma_start :: src_addr not aligned\n");
+      src_width = dst_width = DMA_SLAVE_WIDTH_32BIT;
    }
-   if (dst_addr%4)
+   else if (!((src_addr | dst_addr | xfer_count) & 1))
    {
-      printk(KERN_INFO "nx_sfc_dma_start :: dst_addr not aligned\n");
+      src_width = dst_width = DMA_SLAVE_WIDTH_16BIT;
    }
+   else
+   {
+      src_width = dst_width = DMA_SLAVE_WIDTH_8BIT;
+   }
+
    control |= NX_DMAC_1902_INT_ENABLE;
    control |= NX_DMAC_1902_CHAN_CNTRL_DST_INCR(1);
    control |= NX_DMAC_1902_CHAN_CNTRL_SRC_INCR(1);
@@ -122,19 +130,19 @@ void nx_sfc_dma_start(
    {
       control |= NX_DMAC_1902_CHAN_CNTRL_DST_AHB(nx_dmac_1902_ahb_master_2);
       control |= NX_DMAC_1902_CHAN_CNTRL_SRC_AHB(nx_dmac_1902_ahb_master_1);
-      control |= NX_DMAC_1902_CHAN_CNTRL_DST_WIDTH(0x2);
-      control |= NX_DMAC_1902_CHAN_CNTRL_SRC_WIDTH(0x2);
+      control |= NX_DMAC_1902_CHAN_CNTRL_DST_WIDTH(dst_width);
+      control |= NX_DMAC_1902_CHAN_CNTRL_SRC_WIDTH(src_width);
    }
    else
    {
       control |= NX_DMAC_1902_CHAN_CNTRL_DST_AHB(nx_dmac_1902_ahb_master_1);
       control |= NX_DMAC_1902_CHAN_CNTRL_SRC_AHB(nx_dmac_1902_ahb_master_2);
-      control |= NX_DMAC_1902_CHAN_CNTRL_DST_WIDTH(0x2);
-      control |= NX_DMAC_1902_CHAN_CNTRL_SRC_WIDTH(0x2);
+      control |= NX_DMAC_1902_CHAN_CNTRL_DST_WIDTH(dst_width);
+      control |= NX_DMAC_1902_CHAN_CNTRL_SRC_WIDTH(src_width);
    }
    control |= NX_DMAC_1902_CHAN_CNTRL_DST_BURST(nx_dmac_1902_burst_256);
    control |= NX_DMAC_1902_CHAN_CNTRL_SRC_BURST(nx_dmac_1902_burst_256);
-   control |= ((xfer_count)/4); //32 bit xfer width
+   control |= xfer_count / (1 << src_width);
 
    config = NX_DMAC_1902_UNMASK_INT;
 
@@ -151,7 +159,7 @@ void nx_sfc_dma_start(
       dma_base+NX_DMAC_1902_REG_CHAN_BASE(NX_DMAC_SFC_DMA_CHANNEL_ID) +
       NX_DMAC_1902_REG_CHAN_CONTROL);
    
-   writel(config | NX_DMAC_1902_DMAC_CHAN_ENABLE, 
+   writel(config | NX_DMAC_1902_DMAC_CHAN_ENABLE,
       dma_base+NX_DMAC_1902_REG_CHAN_BASE(NX_DMAC_SFC_DMA_CHANNEL_ID) +
       NX_DMAC_1902_REG_CHAN_CONFIG);
 }
