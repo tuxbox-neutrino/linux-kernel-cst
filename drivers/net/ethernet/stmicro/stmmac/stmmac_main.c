@@ -2949,11 +2949,11 @@ int stmmac_dvr_remove(struct net_device *ndev)
 	priv->hw->dma->stop_tx(priv->ioaddr);
 
 	stmmac_set_mac(priv->ioaddr, false);
+	netif_carrier_off(ndev);
+	unregister_netdev(ndev);
 	if (priv->pcs != STMMAC_PCS_RGMII && priv->pcs != STMMAC_PCS_TBI &&
 	    priv->pcs != STMMAC_PCS_RTBI)
 		stmmac_mdio_unregister(ndev);
-	netif_carrier_off(ndev);
-	unregister_netdev(ndev);
 	free_netdev(ndev);
 
 	return 0;
