@@ -1771,17 +1771,11 @@ static int stmmac_open(struct net_device *dev)
 
 	/* Extra statistics */
 	memset(&priv->xstats, 0, sizeof(struct stmmac_extra_stats));
-
-	priv->xstats.threshold = priv->plat->dma_tx_threshold;
+	priv->xstats.threshold = tc;
 
 	/* Create and initialize the TX/RX descriptors chains. */
-	if (likely(!priv->plat->dma_tx_size))
-		priv->plat->dma_tx_size = dma_txsize;
-	if (likely(!priv->plat->dma_rx_size))
-		priv->plat->dma_rx_size = dma_rxsize;
-		
-	priv->dma_tx_size = STMMAC_ALIGN(priv->plat->dma_tx_size);
-	priv->dma_rx_size = STMMAC_ALIGN(priv->plat->dma_rx_size);
+	priv->dma_tx_size = STMMAC_ALIGN(dma_txsize);
+	priv->dma_rx_size = STMMAC_ALIGN(dma_rxsize);
 	priv->dma_buf_sz = STMMAC_ALIGN(buf_sz);
 
 	ret = alloc_dma_desc_resources(priv);
