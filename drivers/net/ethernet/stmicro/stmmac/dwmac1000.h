@@ -225,7 +225,6 @@ enum rfa {
 	act_full_minus_6 = 0x00800200,
 	act_full_minus_7 = 0x00800400,
 };
-#define DMA_CONTROL_RFA_MASK 0xFF7FF9FF
 
 /* Threshold for Deactivating the FC */
 enum rfd {
@@ -237,7 +236,6 @@ enum rfd {
 	deac_full_minus_6 = 0x00400800,
 	deac_full_minus_7 = 0x00401000,
 };
-#define DMA_CONTROL_RFD_MASK 0xFFBFE7FF
 
 #define DMA_CONTROL_TSF	0x00200000	/* Transmit  Store and Forward */
 
