@@ -1347,8 +1347,7 @@ static void stmmac_tx_clean(struct stmmac_priv *priv)
 		if (likely(skb != NULL)) {
 			pkts_compl++;
 			bytes_compl += skb->len;
-			// dev_consume_skb_any(skb);
-			dev_kfree_skb(skb);
+			dev_kfree_skb_any(skb);
 			priv->tx_skbuff[entry] = NULL;
 		}
 
