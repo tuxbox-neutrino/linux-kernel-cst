@@ -43,10 +43,12 @@ static int  __init apollo_l2x0_init(void)
 	 * Bits:	0011 0010 0000 0010 0001 0000 0000 0001
 	 */
 #ifdef CONFIG_OF
-	l2x0_of_init(0x32021001, 0xffffffff);
+	l2x0_of_init(0x32021001|L2X0_AUX_CTRL_SHARE_OVERRIDE_MASK,
+		     0xffffffff);
 #else
 	l2x0_init(__io_address(CORTEX_A9_L2CACHE_BASE),
-		0x32021001, 0xffffffff);
+		  0x32021001|L2X0_AUX_CTRL_SHARE_OVERRIDE_MASK,
+		  0xffffffff);
 #endif
 
 	/* Change the ACTRL register to Exlusive, Zero Enable, L1 prefetch, L2 prefetch */
