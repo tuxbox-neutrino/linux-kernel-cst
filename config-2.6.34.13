@@ -1446,7 +1446,7 @@ CONFIG_FUSE_FS=m
 # CD-ROM/DVD Filesystems
 #
 # CONFIG_ISO9660_FS is not set
-# CONFIG_UDF_FS is not set
+CONFIG_UDF_FS=y
 
 #
 # DOS/FAT/NT Filesystems
